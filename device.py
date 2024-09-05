@@ -18,9 +18,10 @@ class CustomTab(ft.UserControl):
             padding=ft.padding.symmetric(0, 10),
             controls=[
                 ft.Text("Device info"),
-                ft.Text("Common communication"),
+                ft.Text("Life communication"),
                 ft.Text("SDO communication"),
                 ft.Text("PDO communication"),
+                ft.Text("Object Dictionary"),
             ],
         )
 
@@ -28,25 +29,53 @@ class CustomTab(ft.UserControl):
         od = network.add_node(1, object_dictionary=self.path_to_od)
 
         # Device info
-        self.text_node_id = ft.Text("Node ID")
-        self.text_edit_node_id = ft.TextField(od.id)
-        self.text_dev_type = ft.Text("Device Type")
-        self.text_edit_dev_type = ft.TextField(od.object_dictionary[0x1000].default)
+        self.t_product_name = ft.Text("Vendor Name")
+        self.te_product_name = ft.TextField(od.object_dictionary.device_information.product_name)
+        self.t_product_number = ft.Text("Vendor Number")
+        self.te_product_number = ft.TextField(od.object_dictionary.device_information.product_number)
+
+        self.t_vendor_name = ft.Text("Vendor Name")
+        self.te_vendor_name = ft.TextField(od.object_dictionary.device_information.vendor_name)
+        self.t_vendor_number = ft.Text("Vendor Number")
+        self.te_vendor_number = ft.TextField(od.object_dictionary.device_information.vendor_number)
+
+        self.t_node_id = ft.Text("Node ID")
+        self.te_node_id = ft.TextField(od.id)
+        self.t_dev_type = ft.Text("Device Type")
+        self.te_dev_type = ft.TextField(od.object_dictionary[0x1000].default)
 
         self.device_info_panel = ft.Row([
-            self.text_node_id,
-            self.text_edit_node_id,
-            self.text_dev_type,
-            self.text_edit_dev_type
+            ft.Column([
+                self.t_node_id,
+                self.te_node_id,
+                self.t_dev_type,
+                self.te_dev_type
+            ],
+            ),
+            ft.Column([
+                self.t_product_name,
+                self.te_product_name,
+                self.t_product_number,
+                self.te_product_number,
+                self.t_vendor_name,
+                self.te_vendor_name,
+                self.t_vendor_number,
+                self.te_vendor_number,
+            ]),
         ]
         )
 
-        # Common communication
-        self.text_hb = ft.Text("Producer Heartbeat Time, ms:")
-        self.text_edit_hb = ft.TextField(od.object_dictionary[0x1017].default)
+        # Life communication
+        # TODO
+
+        # SDO communication
+        # TODO
+        self.t_prod_hb = ft.Text("Producer Heartbeat Time, ms:")
+        self.te_prod_hb = ft.TextField(od.object_dictionary[0x1017].default)
+
         self.common_communication_panel = ft.Row([
-            self.text_hb,
-            self.text_edit_hb
+            self.t_prod_hb,
+            self.te_prod_hb
         ],
             visible=False
         )
@@ -55,6 +84,12 @@ class CustomTab(ft.UserControl):
             self.device_info_panel,
             self.common_communication_panel
         ])
+
+        # PDO communication
+        # TODO
+
+        # Object Dictionary
+        # TODO
 
     def build(self):
         return self.info_column
@@ -65,5 +100,17 @@ class CustomTab(ft.UserControl):
             self.common_communication_panel.visible = False
         if e.data == '1':
             self.device_info_panel.visible = False
+            self.common_communication_panel.visible = False
+        self.update()
+        if e.data == '2':
+            self.device_info_panel.visible = False
             self.common_communication_panel.visible = True
+        self.update()
+        if e.data == '3':
+            self.device_info_panel.visible = False
+            self.common_communication_panel.visible = False
+        self.update()
+        if e.data == '4':
+            self.device_info_panel.visible = False
+            self.common_communication_panel.visible = False
         self.update()
