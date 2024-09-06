@@ -5,7 +5,7 @@ list_of_devices = []
 
 
 def main(page: ft.Page):
-    page.title = "Objdictedit - ObjDict"
+    page.title = "Objdict editor"
     page.theme_mode = ft.ThemeMode.LIGHT
 
     devices = ft.Tabs(
