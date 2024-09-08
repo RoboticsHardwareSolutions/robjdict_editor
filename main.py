@@ -1,5 +1,5 @@
 import flet as ft
-import device
+from device_tab import DeviceTab
 
 list_of_devices = []
 
@@ -19,7 +19,7 @@ def main(page: ft.Page):
     def pick_files_result(e: ft.FilePickerResultEvent):
         names_new_tabs = list(map(lambda f: f.path, e.files))
         for new_tab in names_new_tabs:
-            new_device = device.CustomTab(new_tab)
+            new_device = DeviceTab(new_tab)
             list_of_devices.append(new_device)
             devices.tabs.append(new_device)
             page.update()

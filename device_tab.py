@@ -8,7 +8,7 @@ from panels.pdo_communication import PdoCommunicationPanel
 from panels.object_dictionary import ObjDictPanel
 
 
-class CustomTab(ft.Tab):
+class DeviceTab(ft.Tab):
     CTRL_DEVICE_INFO = "Device info"
     CTRL_LIFE_COMMUNICATION = "Life communication"
     CTRL_SDO_COMMUNICATION = "SDO communication"
