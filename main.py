@@ -21,8 +21,7 @@ def main(page: ft.Page):
         for new_tab in names_new_tabs:
             new_device = device.CustomTab(new_tab)
             list_of_devices.append(new_device)
-            tab = ft.Tab(text=new_device.name_od, content=new_device)
-            devices.tabs.append(tab)
+            devices.tabs.append(new_device)
             page.update()
 
     pick_files_dialog = ft.FilePicker(on_result=pick_files_result)
@@ -30,7 +29,7 @@ def main(page: ft.Page):
 
     # Create the top menu bar
     menubar = ft.AppBar(
-        title=ft.Text("Objdictedit - ObjDict"),
+        title=ft.Text("Objdict editor"),
         actions=[
             ft.IconButton(ft.icons.FILE_DOWNLOAD_OUTLINED,
                           on_click=lambda e: pick_files_dialog.pick_files(allow_multiple=True,

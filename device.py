@@ -1,11 +1,14 @@
 import os
 import canopen
-import can
-from can import Message
 import flet as ft
+from panels.dev_info import DevInfoPanel
+from panels.life_communication import LifeCommunicationPanel
+from panels.sdo_communication import SdoCommunicationPanel
+from panels.pdo_communication import PdoCommunicationPanel
+from panels.object_dictionary import ObjDictPanel
 
 
-class CustomTab(ft.UserControl):
+class CustomTab(ft.Tab):
     CTRL_DEVICE_INFO = "Device info"
     CTRL_LIFE_COMMUNICATION = "Life communication"
     CTRL_SDO_COMMUNICATION = "SDO communication"
@@ -15,7 +18,7 @@ class CustomTab(ft.UserControl):
     def __init__(self, path_to_od):
         super().__init__()
         self.path_to_od = path_to_od
-        self.name_od = os.path.basename(path_to_od)
+        self.text = os.path.basename(path_to_od)
         self.cssb = ft.CupertinoSlidingSegmentedButton(
             selected_index=0,
             thumb_color=ft.colors.BLUE_400,
@@ -33,121 +36,51 @@ class CustomTab(ft.UserControl):
         network = canopen.Network()
         od = network.add_node(1, object_dictionary=self.path_to_od)
 
-        # Device info
-        self.t_product_name = ft.Text("Vendor Name")
-        self.te_product_name = ft.TextField(od.object_dictionary.device_information.product_name)
-        self.t_product_number = ft.Text("Vendor Number")
-        self.te_product_number = ft.TextField(od.object_dictionary.device_information.product_number)
-
-        self.t_vendor_name = ft.Text("Vendor Name")
-        self.te_vendor_name = ft.TextField(od.object_dictionary.device_information.vendor_name)
-        self.t_vendor_number = ft.Text("Vendor Number")
-        self.te_vendor_number = ft.TextField(od.object_dictionary.device_information.vendor_number)
-
-        self.t_node_id = ft.Text("Node ID")
-        self.te_node_id = ft.TextField(od.id)
-        self.t_dev_type = ft.Text("Device Type")
-        self.te_dev_type = ft.TextField(od.object_dictionary[0x1000].default)
-
-        self.device_info_panel = ft.ResponsiveRow([
-            ft.Column([
-                self.t_node_id,
-                self.te_node_id,
-                self.t_dev_type,
-                self.te_dev_type
-            ],
-                col={"sm": 6},
-            ),
-            ft.Column([
-                self.t_product_name,
-                self.te_product_name,
-                self.t_product_number,
-                self.te_product_number,
-                self.t_vendor_name,
-                self.te_vendor_name,
-                self.t_vendor_number,
-                self.te_vendor_number,
-            ],
-                col={"sm": 6}, ),
-        ]
-        )
-
-        # Life communication
-        self.life_communication_panel = ft.ResponsiveRow([
-            ft.Text("TODO life_communication_panel")
-        ],
-            visible=False
-        )
-
-        # SDO communication
-        # TODO
-        self.t_prod_hb = ft.Text("Producer Heartbeat Time, ms:")
-        self.te_prod_hb = ft.TextField(od.object_dictionary[0x1017].default)
-
-        self.sdo_communication_panel = ft.ResponsiveRow([
-            self.t_prod_hb,
-            self.te_prod_hb
-        ],
-            visible=False
-        )
-
-        # PDO communication
-        self.pdo_communication_panel = ft.ResponsiveRow([
-            ft.Text("TODO pdo_communication_panel")
-        ],
-            visible=False
-        )
-
-        # Object Dictionary
-        self.object_dictionary_panel = ft.ResponsiveRow([
-            ft.Text("TODO object_dictionary_panel")
-        ],
-            visible=False
-        )
-
+        self.dev_info = DevInfoPanel(od)
+        self.life_communication = LifeCommunicationPanel(od)
+        self.sdo_communication = SdoCommunicationPanel(od)
+        self.pdo_communication = PdoCommunicationPanel(od)
+        self.obj_dict = ObjDictPanel(od)
         # Main panel
-        self.info_column = ft.Column([
+        self.content = ft.Column([
             self.cssb,
-            self.device_info_panel,
-            self.life_communication_panel,
-            self.sdo_communication_panel,
-            self.pdo_communication_panel,
-            self.object_dictionary_panel
+            self.dev_info,
+            self.life_communication,
+            self.sdo_communication,
+            self.pdo_communication,
+            self.obj_dict
         ])
-
-    def build(self):
-        return self.info_column
 
     def __seg_btn(self, e):
         target_segment = e.control.controls[int(e.data)].value
         if target_segment == self.CTRL_DEVICE_INFO:
-            self.device_info_panel.visible = True
-            self.life_communication_panel.visible = False
-            self.sdo_communication_panel.visible = False
-            self.pdo_communication_panel.visible = False
-            self.object_dictionary_panel.visible = False
+            self.dev_info.visible = True
+            self.life_communication.visible = False
+            self.sdo_communication.visible = False
+            self.pdo_communication.visible = False
+            self.obj_dict.visible = False
         elif target_segment == self.CTRL_LIFE_COMMUNICATION:
-            self.device_info_panel.visible = False
-            self.life_communication_panel.visible = True
-            self.sdo_communication_panel.visible = False
-            self.pdo_communication_panel.visible = False
-            self.object_dictionary_panel.visible = False
+            self.dev_info.visible = False
+            self.life_communication.visible = True
+            self.sdo_communication.visible = False
+            self.pdo_communication.visible = False
+            self.obj_dict.visible = False
         elif target_segment == self.CTRL_SDO_COMMUNICATION:
-            self.device_info_panel.visible = False
-            self.life_communication_panel.visible = False
-            self.sdo_communication_panel.visible = True
-            self.pdo_communication_panel.visible = False
-            self.object_dictionary_panel.visible = False
+            self.dev_info.visible = False
+            self.life_communication.visible = False
+            self.sdo_communication.visible = True
+            self.pdo_communication.visible = False
+            self.obj_dict.visible = False
         elif target_segment == self.CTRL_PDO_COMMUNICATION:
-            self.device_info_panel.visible = False
-            self.life_communication_panel.visible = False
-            self.sdo_communication_panel.visible = False
-            self.pdo_communication_panel.visible = True
-            self.object_dictionary_panel.visible = False
+            self.dev_info.visible = False
+            self.life_communication.visible = False
+            self.sdo_communication.visible = False
+            self.pdo_communication.visible = True
+            self.obj_dict.visible = False
         elif target_segment == self.CTRL_OBJECT_DICTIONARY:
-            self.device_info_panel.visible = False
-            self.life_communication_panel.visible = False
-            self.sdo_communication_panel.visible = False
-            self.pdo_communication_panel.visible = False
-            self.object_dictionary_panel.visible = True
+            self.dev_info.visible = False
+            self.life_communication.visible = False
+            self.sdo_communication.visible = False
+            self.pdo_communication.visible = False
+            self.obj_dict.visible = True
         self.update()
