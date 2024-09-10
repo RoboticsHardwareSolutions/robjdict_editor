@@ -27,6 +27,10 @@ def main(page: ft.Page):
     pick_files_dialog = ft.FilePicker(on_result=pick_files_result)
     page.overlay.append(pick_files_dialog)
 
+    def save_od(e):
+        device = list_of_devices[devices.selected_index - 1]
+        device.save_device()
+
     # Create the top menu bar
     menubar = ft.AppBar(
         title=ft.Text("Objdict editor"),
@@ -34,9 +38,7 @@ def main(page: ft.Page):
             ft.IconButton(ft.icons.FILE_DOWNLOAD_OUTLINED,
                           on_click=lambda e: pick_files_dialog.pick_files(allow_multiple=True,
                                                                           allowed_extensions=["eds", "dcf", "epf"])),
-            ft.IconButton(ft.icons.EDIT, on_click=lambda e: print("Edit")),
-            ft.IconButton(ft.icons.ADD_CIRCLE_OUTLINE, on_click=lambda e: print("Add")),
-            ft.IconButton(ft.icons.HELP, on_click=lambda e: print("Help")),
+            ft.IconButton(ft.icons.SAVE, on_click=save_od),
         ]
     )
     page.add(menubar)

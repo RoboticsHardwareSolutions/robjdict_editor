@@ -34,13 +34,13 @@ class DeviceTab(ft.Tab):
         )
 
         network = canopen.Network()
-        od = network.add_node(1, object_dictionary=self.path_to_od)
+        self.__od = network.add_node(1, object_dictionary=self.path_to_od)
 
-        self.dev_info = DevInfoPanel(od)
-        self.life_communication = LifeCommunicationPanel(od)
-        self.sdo_communication = SdoCommunicationPanel(od)
-        self.pdo_communication = PdoCommunicationPanel(od)
-        self.obj_dict = ObjDictPanel(od)
+        self.dev_info = DevInfoPanel(self.__od)
+        self.life_communication = LifeCommunicationPanel(self.__od)
+        self.sdo_communication = SdoCommunicationPanel(self.__od)
+        self.pdo_communication = PdoCommunicationPanel(self.__od)
+        self.obj_dict = ObjDictPanel(self.__od)
         # Main panel
         self.content = ft.Column([
             self.cssb,
@@ -50,6 +50,12 @@ class DeviceTab(ft.Tab):
             self.pdo_communication,
             self.obj_dict
         ])
+
+    def save_device(self):
+        od = self.__od
+        od = self.dev_info.update_od(od)
+        od = self.life_communication.update_od(od)
+        canopen.export_od(od.object_dictionary, self.path_to_od)
 
     def __seg_btn(self, e):
         target_segment = e.control.controls[int(e.data)].value
