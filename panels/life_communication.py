@@ -15,22 +15,20 @@ class LifeCommunicationPanel(ft.ResponsiveRow):
         def handle_confirm_dismiss(e: ft.DismissibleDismissEvent):
             if e.direction == ft.DismissDirection.END_TO_START:  # right-to-left slide
                 # save current dismissible to dialog's data, for confirmation in handle_dlg_action_clicked
-                dlg_del.data = e.control
-                e.page.open(dlg_del)
+                e.control.confirm_dismiss(True)
             else:  # left-to-right slide
-                dlg_add.data = e.control.parent
-                e.page.open(dlg_add)
+                for item_diss in range(len(self.list_view.controls)):
+                    if e.control.uid == self.list_view.controls[item_diss].uid:
+                        self.list_view.controls.insert(item_diss + 1, add_consumer_heartbeat(f'{hex(0x01)}',
+                                                                                             1000))
+
                 e.control.confirm_dismiss(False)
+                self.update()
 
         def handle_dismiss(e):
             print('on_dismiss')
             e.control.parent.controls.remove(e.control)
             self.update()
-
-        def handle_update(e: ft.DismissibleUpdateEvent):
-            print(
-                f"Update - direction: {e.direction}, progress: {e.progress}, reached: {e.reached}, previous_reached: {e.previous_reached}"
-            )
 
         def add_consumer_heartbeat(node_id, time):
 
@@ -52,7 +50,6 @@ class LifeCommunicationPanel(ft.ResponsiveRow):
                                                   alignment=ft.alignment.center_right,
                                                   padding=ft.padding.only(right=10)),
                 on_dismiss=handle_dismiss,
-                on_update=handle_update,
                 on_confirm_dismiss=handle_confirm_dismiss,
                 dismiss_thresholds={
                     ft.DismissDirection.END_TO_START: 0.2,
@@ -60,53 +57,23 @@ class LifeCommunicationPanel(ft.ResponsiveRow):
                 },
             )
 
-        def handle_dlg_del_action_clicked(e):
-            e.page.close(dlg_del)
-            dlg_del.data.confirm_dismiss(e.control.data)
-
-        def handle_dlg_add_action_clicked(e):
-            e.page.close(dlg_add)
-            dlg_add.data.controls.append(
-                add_consumer_heartbeat("0x" + dlg_add.actions[0].value, dlg_add.actions[1].value))
-            self.update()
-            # dlg.data.confirm_dismiss(False)
-
-        dlg_del = ft.AlertDialog(
-            modal=True,
-            title=ft.Text("Please confirm"),
-            content=ft.Text("Do you really want to delete this item?"),
-            actions=[
-                ft.TextButton("Yes", data=True, on_click=handle_dlg_del_action_clicked),
-                ft.TextButton("No", data=False, on_click=handle_dlg_del_action_clicked),
-            ],
-            actions_alignment=ft.MainAxisAlignment.CENTER,
-        )
-
-        dlg_add = ft.AlertDialog(
-            modal=True,
-            title=ft.Text("Please confirm"),
-            content=ft.Text("Set new consumer heartbeat"),
-            actions=[
-                ft.TextField(
-                    height=70,
-                    label="Node ID, hex",
-                    value="1"),
-                ft.TextField(
-                    height=70,
-                    label="Time, ms",
-                    value="1000"),
-                ft.TextButton("OK", data=True, on_click=handle_dlg_add_action_clicked),
-                ft.TextButton("Cancel", data=False, on_click=handle_dlg_add_action_clicked),
-            ],
-            actions_alignment=ft.MainAxisAlignment.CENTER,
-        )
-
         self.list_view = ft.ListView(expand=1, spacing=10, padding=20, height=300, width=500)
-        for item in range(od.object_dictionary.get_variable(0x1016, 0).default):
-            data = od.object_dictionary.get_variable(0x1016, item + 1).default
-            self.list_view.controls.append(add_consumer_heartbeat(f'{hex((data >> 16) & 0xFF)}',
-                                                                  f'{(data & 0xFFFF)}')
-                                           )
+
+        def start_chb(e):
+            self.list_view.controls.clear()
+            self.list_view.controls.append(add_consumer_heartbeat(f'{hex(0x01)}',
+                                                                  f'{1000}'))
+            self.update()
+
+        if od.object_dictionary.get_variable(0x1016, 0) is not None:
+            for item in range(od.object_dictionary.get_variable(0x1016, 0).default):
+                data = od.object_dictionary.get_variable(0x1016, item + 1).default
+                self.list_view.controls.append(add_consumer_heartbeat(f'{hex((data >> 16) & 0xFF)}',
+                                                                      f'{(data & 0xFFFF)}')
+                                               )
+        else:
+            self.list_view.controls.append(
+                ft.TextButton("Add Consumer Heartbeat Time", data=True, on_click=start_chb))
 
         self.controls = [ft.Row([
             ft.Column([
@@ -119,7 +86,10 @@ class LifeCommunicationPanel(ft.ResponsiveRow):
     def update_od(self, od):
         od.object_dictionary.get_variable(0x1017).default = self.te_prod_hb.value
 
-        od.object_dictionary.__delitem__(0x1016)
+        try:
+            od.object_dictionary.__delitem__(0x1016)
+        except:
+            print("An exception occurred")
 
         od_cd = canopen.objectdictionary.ODArray("Consumer Heartbeat Time", 0x1016)
 
@@ -132,7 +102,8 @@ class LifeCommunicationPanel(ft.ResponsiveRow):
             var = canopen.objectdictionary.ODVariable("Consumer Heartbeat Time", 0x1016, item + 1)
             var.access_type = "rw"
             var.data_type = canopen.objectdictionary.datatypes.UNSIGNED32
-            var.default = int(self.list_view.controls[item].content.controls[0].value, 16) << 16 | int(self.list_view.controls[item].content.controls[1].value)
+            var.default = int(self.list_view.controls[item].content.controls[0].value, 16) << 16 | int(
+                self.list_view.controls[item].content.controls[1].value)
             od_cd.add_member(var)
 
         od.object_dictionary.add_object(od_cd)
