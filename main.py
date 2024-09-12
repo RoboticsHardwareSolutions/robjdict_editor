@@ -7,13 +7,16 @@ list_of_devices = []
 def main(page: ft.Page):
     page.title = "Objdict editor"
     page.theme_mode = ft.ThemeMode.LIGHT
+    page.window.min_height = 600
+    page.window.height = 600
+    page.window.min_width = 1000
+    page.window.width = 1000
 
     devices = ft.Tabs(
         selected_index=1,
         animation_duration=300,
         expand=1,
     )
-    page.add(devices)
 
     # File picker
     def pick_files_result(e: ft.FilePickerResultEvent):
@@ -41,7 +44,10 @@ def main(page: ft.Page):
             ft.IconButton(ft.icons.SAVE, on_click=save_od),
         ]
     )
-    page.add(menubar)
+    page.add(
+        menubar,
+        devices
+    )
     page.update()
 
 

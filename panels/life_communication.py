@@ -8,7 +8,7 @@ class LifeCommunicationPanel(ft.ResponsiveRow):
     def __init__(self, od):
         super().__init__()
         self.te_prod_hb = ft.TextField(label="Producer Heartbeat Time, ms:",
-                                       width=300,
+                                       width=200,
                                        value=od.object_dictionary.get_variable(0x1017, 0).default)
         self.visible = False
 
@@ -24,6 +24,7 @@ class LifeCommunicationPanel(ft.ResponsiveRow):
                     if e.control.uid == self.list_view.controls[item_diss].uid:
                         self.list_view.controls.insert(item_diss + 1, add_consumer_heartbeat(f'{hex(0x01)}',
                                                                                              1000))
+                        break
 
                 e.control.confirm_dismiss(False)
                 self.update()
