@@ -18,7 +18,7 @@ class SdoCommunicationPanel(ft.ResponsiveRow):
 
         def button_first_sdo_cli(e):
             self.lv_sdo_client.controls.clear()
-            self.lv_sdo_client.controls.append(add_consumer_heartbeat(f'{hex(0x01)}', f'{hex(0x01)}', f'{hex(0x01)}'))
+            self.lv_sdo_client.controls.append(add_consumer_heartbeat(f'{hex(0x01)}', f'{hex(0x601)}', f'{hex(0x581)}'))
             self.t_sdo_client.value = "SDO Client :" + str(len(self.lv_sdo_client.controls))
             self.update()
 
@@ -76,6 +76,18 @@ class SdoCommunicationPanel(ft.ResponsiveRow):
                     ),
                 ], ),
             )
+
+        for index_cli_sdo in range(int(hex(0x1280), 16), int(hex(0x12FF), 16)):
+            if od.object_dictionary.get_variable(index_cli_sdo) is not None:
+                tx = od.object_dictionary.get_variable(index_cli_sdo, 1).default
+                rx = od.object_dictionary.get_variable(index_cli_sdo, 2).default
+                node_id = od.object_dictionary.get_variable(index_cli_sdo, 3).default
+                self.lv_sdo_client.controls.append(
+                    add_consumer_heartbeat(f'{hex(node_id)}', f'{hex(rx)}', f'{hex(tx)}'))
+            else:
+                break
+        if len(self.lv_sdo_client.controls) == 0:
+            self.lv_sdo_client.controls.append(self.__add_btn)
 
         self.controls = [
             ft.ResponsiveRow(
