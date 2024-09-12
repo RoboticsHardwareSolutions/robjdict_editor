@@ -15,6 +15,9 @@ class LifeCommunicationPanel(ft.ResponsiveRow):
         def handle_confirm_dismiss(e: ft.DismissibleDismissEvent):
             if e.direction == ft.DismissDirection.END_TO_START:  # right-to-left slide
                 # save current dismissible to dialog's data, for confirmation in handle_dlg_action_clicked
+                if len(self.list_view.controls) == 1:
+                    self.list_view.controls.append(
+                        ft.TextButton("Add Consumer Heartbeat Time", data=True, on_click=start_chb))
                 e.control.confirm_dismiss(True)
             else:  # left-to-right slide
                 for item_diss in range(len(self.list_view.controls)):
