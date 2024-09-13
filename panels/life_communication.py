@@ -105,28 +105,33 @@ class LifeCommunicationPanel(ft.ResponsiveRow):
         ]
 
     def update_od(self, od):
+        # Save Producer Heartbeat Time
         od.object_dictionary.get_variable(0x1017).default = self.te_prod_hb.value
 
+        # Save Consumer Heartbeat Time
+        ## clear old times
         try:
             od.object_dictionary.__delitem__(0x1016)
         except:
             print("An exception occurred")
 
-        od_cd = canopen.objectdictionary.ODArray("Consumer Heartbeat Time", 0x1016)
+        ## update OD
+        if self.lv_consumer_hb.controls[0].content is not None:
+            od_cd = canopen.objectdictionary.ODArray("Consumer Heartbeat Time", 0x1016)
 
-        var = canopen.objectdictionary.ODVariable("Number of Entries", 0x1016, 0)
-        var.access_type = "ro"
-        var.data_type = canopen.objectdictionary.datatypes.UNSIGNED8
-        var.default = len(self.lv_consumer_hb.controls)
-        od_cd.add_member(var)
-        for item in range(len(self.lv_consumer_hb.controls)):
-            var = canopen.objectdictionary.ODVariable("Consumer Heartbeat Time", 0x1016, item + 1)
-            var.access_type = "rw"
-            var.data_type = canopen.objectdictionary.datatypes.UNSIGNED32
-            var.default = int(self.lv_consumer_hb.controls[item].content.controls[0].value, 16) << 16 | int(
-                self.lv_consumer_hb.controls[item].content.controls[1].value)
+            var = canopen.objectdictionary.ODVariable("Number of Entries", 0x1016, 0)
+            var.access_type = "ro"
+            var.data_type = canopen.objectdictionary.datatypes.UNSIGNED8
+            var.default = len(self.lv_consumer_hb.controls)
             od_cd.add_member(var)
+            for item in range(len(self.lv_consumer_hb.controls)):
+                var = canopen.objectdictionary.ODVariable("Consumer Heartbeat Time", 0x1016, item + 1)
+                var.access_type = "rw"
+                var.data_type = canopen.objectdictionary.datatypes.UNSIGNED32
+                var.default = int(self.lv_consumer_hb.controls[item].content.controls[0].value, 16) << 16 | int(
+                    self.lv_consumer_hb.controls[item].content.controls[1].value)
+                od_cd.add_member(var)
 
-        od.object_dictionary.add_object(od_cd)
+            od.object_dictionary.add_object(od_cd)
 
         return od
