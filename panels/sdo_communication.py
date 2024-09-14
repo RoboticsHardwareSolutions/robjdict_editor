@@ -28,10 +28,30 @@ class SdoCommunicationPanel(ft.ResponsiveRow):
             for item_diss in range(len(self.lv_sdo_client.controls)):
                 objs = self.lv_sdo_client.controls
                 if e.control.parent.parent.uid == objs[item_diss].uid:
-                    id = int(objs[item_diss].content.controls[0].value, 16) + 1
-                    objs.insert(item_diss + 1,
-                                add_consumer_heartbeat(f'{hex(id)}', f'{hex(id + 0x600)}', f'{hex(id + 0x580)}'))
-            self.t_sdo_client.value = "SDO Client :" + str(len(self.lv_sdo_client.controls))
+                    if int(objs[item_diss].content.controls[0].value, 16) == 0x7f:
+                        new_id = 0x7f
+                    else:
+                        new_id = int(objs[item_diss].content.controls[0].value, 16) + 1
+
+                    self.lv_sdo_client.auto_scroll = False
+                    try:
+                        next_obj = objs[item_diss + 1]
+                        if int(next_obj.content.controls[0].value, 16) == new_id:
+                            self.lv_sdo_client.auto_scroll = True
+                            new_id = 0x7f
+                            objs.append(add_consumer_heartbeat(f'{hex(new_id)}', f'{hex(new_id + 0x600)}',
+                                                               f'{hex(new_id + 0x580)}'))
+                        else:
+                            objs.insert(item_diss + 1,
+                                        add_consumer_heartbeat(f'{hex(new_id)}', f'{hex(new_id + 0x600)}',
+                                                               f'{hex(new_id + 0x580)}'))
+
+                    except IndexError:
+                        objs.insert(item_diss + 1,
+                                    add_consumer_heartbeat(f'{hex(new_id)}', f'{hex(new_id + 0x600)}',
+                                                           f'{hex(new_id + 0x580)}'))
+
+                self.t_sdo_client.value = "SDO Client :" + str(len(self.lv_sdo_client.controls))
             self.update()
 
         def button_delete(e):

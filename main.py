@@ -14,11 +14,9 @@ def main(page: ft.Page):
 
     def page_resize(e):
         for tab in devices.tabs:
-            tab.life_communication.lv_consumer_hb.height = page.height - 100
-            tab.sdo_communication.lv_sdo_client.height = page.height - 100
+            tab.life_communication.lv_consumer_hb.height = page.height - 200
+            tab.sdo_communication.lv_sdo_client.height = page.height - 200
             page.update()
-        # pw.value = f"{page.width} px"
-        # pw.update()
 
     page.on_resized = page_resize
 
