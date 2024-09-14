@@ -15,10 +15,12 @@ class DeviceTab(ft.Tab):
     CTRL_PDO_COMMUNICATION = "PDO communication"
     CTRL_OBJECT_DICTIONARY = "Object Dictionary"
 
-    def __init__(self, path_to_od):
+    def __init__(self, path_to_od, ibtn: ft.IconButton):
         super().__init__()
+
         self.path_to_od = path_to_od
         self.text = os.path.basename(path_to_od)
+        self.tab_content = ft.Row([ft.Text(self.text), ibtn])
         self.cssb = ft.CupertinoSlidingSegmentedButton(
             selected_index=0,
             thumb_color=ft.colors.BLUE_400,

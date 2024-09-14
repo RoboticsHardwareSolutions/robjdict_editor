@@ -18,11 +18,22 @@ def main(page: ft.Page):
         expand=1,
     )
 
+    def button_delete(e):
+        for device in list_of_devices:
+            if device.uid == e.control.parent.parent.uid:
+                list_of_devices.remove(device)
+                devices.tabs.remove(device)
+                page.update()
+                
     # File picker
     def pick_files_result(e: ft.FilePickerResultEvent):
         names_new_tabs = list(map(lambda f: f.path, e.files))
         for new_tab in names_new_tabs:
-            new_device = DeviceTab(new_tab)
+            btn = ft.IconButton(
+                icon=ft.icons.CLOSE,
+                on_click=button_delete,
+            )
+            new_device = DeviceTab(new_tab, btn)
             list_of_devices.append(new_device)
             devices.tabs.append(new_device)
             page.update()
