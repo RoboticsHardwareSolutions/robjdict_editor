@@ -12,6 +12,16 @@ def main(page: ft.Page):
     page.window.min_width = 1000
     page.window.width = 1000
 
+    def page_resize(e):
+        for tab in devices.tabs:
+            tab.life_communication.lv_consumer_hb.height = page.height - 100
+            tab.sdo_communication.lv_sdo_client.height = page.height - 100
+            page.update()
+        # pw.value = f"{page.width} px"
+        # pw.update()
+
+    page.on_resized = page_resize
+
     devices = ft.Tabs(
         selected_index=1,
         animation_duration=300,
@@ -24,7 +34,7 @@ def main(page: ft.Page):
                 list_of_devices.remove(device)
                 devices.tabs.remove(device)
                 page.update()
-                
+
     # File picker
     def pick_files_result(e: ft.FilePickerResultEvent):
         names_new_tabs = list(map(lambda f: f.path, e.files))
