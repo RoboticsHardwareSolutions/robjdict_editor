@@ -145,7 +145,7 @@ class SdoCommunicationPanel(ft.ResponsiveRow):
 
         if self.lv_sdo_client.controls[0].content is not None:
             for item in range(len(self.lv_sdo_client.controls)):
-                od_cli_sdo = canopen.objectdictionary.ODArray(f'Client SDO {item + 1} Parameter', 0x1280 + item)
+                od_cli_sdo = canopen.objectdictionary.ODRecord(f'Client SDO {item + 1} Parameter', 0x1280 + item)
                 var = canopen.objectdictionary.ODVariable("Number of Entries", 0x1280 + item, 0)
                 var.access_type = "ro"
                 var.data_type = canopen.objectdictionary.datatypes.UNSIGNED8

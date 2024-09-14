@@ -1,8 +1,6 @@
 import flet as ft
 from device_tab import DeviceTab
 
-list_of_devices = []
-
 
 def main(page: ft.Page):
     page.title = "Objdict editor"
@@ -27,9 +25,8 @@ def main(page: ft.Page):
     )
 
     def button_delete(e):
-        for device in list_of_devices:
+        for device in devices.tabs:
             if device.uid == e.control.parent.parent.uid:
-                list_of_devices.remove(device)
                 devices.tabs.remove(device)
                 page.update()
 
@@ -42,7 +39,6 @@ def main(page: ft.Page):
                 on_click=button_delete,
             )
             new_device = DeviceTab(new_tab, btn)
-            list_of_devices.append(new_device)
             devices.tabs.append(new_device)
             page.update()
 
@@ -50,7 +46,7 @@ def main(page: ft.Page):
     page.overlay.append(pick_files_dialog)
 
     def save_od(e):
-        device = list_of_devices[devices.selected_index - 1]
+        device = devices.tabs[devices.selected_index - 1]
         device.save_device()
 
     # Create the top menu bar
