@@ -27,7 +27,7 @@ class LifeCommunicationPanel(ft.ResponsiveRow):
         def button_add(e):
             for item_diss in range(len(self.lv_consumer_hb.controls)):
                 objs = self.lv_consumer_hb.controls
-                if e.control.parent.parent.uid == objs[item_diss].uid: # found target obj
+                if e.control.parent.parent.uid == objs[item_diss].uid:  # found target obj
                     if int(objs[item_diss].content.controls[0].value, 16) == 0x7f:
                         new_id = 0x7f
                     else:
