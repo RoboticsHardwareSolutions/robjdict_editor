@@ -12,8 +12,9 @@ def main(page: ft.Page):
 
     def page_resize(e):
         for tab in devices.tabs:
-            tab.life_communication.lv_consumer_hb.height = page.height - 200
-            tab.sdo_communication.lv_sdo_client.height = page.height - 200
+            if isinstance(tab, DeviceTab):
+                tab.life_communication.lv_consumer_hb.height = page.height - 200
+                tab.sdo_communication.lv_sdo_client.height = page.height - 200
             page.update()
 
     page.on_resized = page_resize
@@ -47,7 +48,8 @@ def main(page: ft.Page):
 
     def save_od(e):
         device = devices.tabs[devices.selected_index - 1]
-        device.save_device()
+        if isinstance(device, DeviceTab):
+            device.save_device()
 
     # Create the top menu bar
     menubar = ft.AppBar(
