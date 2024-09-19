@@ -25,25 +25,28 @@ class LifeCommunicationPanel(ft.ResponsiveRow):
         self.__btn_first_chb = ft.TextButton("Add Consumer Heartbeat Time", data=True, col=8, on_click=start_chb)
 
         def button_add(e):
-            for item_diss in range(len(self.lv_consumer_hb.controls)):
-                objs = self.lv_consumer_hb.controls
-                if e.control.parent.parent.uid == objs[item_diss].uid:  # found target obj
-                    if int(objs[item_diss].content.controls[0].value, 16) == 0x7f:
-                        new_id = 0x7f
-                    else:
-                        new_id = int(objs[item_diss].content.controls[0].value, 16) + 1
-                    self.lv_consumer_hb.auto_scroll = False
-                    try:
-                        next_obj = objs[item_diss + 1]
-                        if int(next_obj.content.controls[0].value, 16) == new_id:
-                            self.lv_consumer_hb.auto_scroll = True
+            objs = self.lv_consumer_hb.controls
+            for item_obj in range(len(objs)):
+                obj = objs[item_obj]
+                if isinstance(obj, ft.Container):
+                    if e.control.parent.parent.uid == objs[item_obj].uid:  # found target obj
+                        if int(obj.content.controls[0].value, 16) == 0x7f:
                             new_id = 0x7f
-                            objs.append(add_consumer_heartbeat(f'{hex(new_id)}', 1000))
                         else:
-                            objs.insert(item_diss + 1, add_consumer_heartbeat(f'{hex(new_id)}', 1000))
-                    except IndexError:
-                        objs.insert(item_diss + 1, add_consumer_heartbeat(f'{hex(new_id)}', 1000))
-                self.t_consumer_hb.value = "Consumer Heartbeat :" + str(len(self.lv_consumer_hb.controls))
+                            new_id = int(obj.content.controls[0].value, 16) + 1
+                        self.lv_consumer_hb.auto_scroll = False
+                        try:
+                            next_obj = objs[item_obj + 1]
+                            if isinstance(next_obj, ft.Container):
+                                if int(next_obj.content.controls[0].value, 16) == new_id:
+                                    self.lv_consumer_hb.auto_scroll = True
+                                    new_id = 0x7f
+                                    objs.append(add_consumer_heartbeat(f'{hex(new_id)}', 1000))
+                                else:
+                                    objs.insert(item_obj + 1, add_consumer_heartbeat(f'{hex(new_id)}', 1000))
+                        except IndexError:
+                            objs.insert(item_obj + 1, add_consumer_heartbeat(f'{hex(new_id)}', 1000))
+                    self.t_consumer_hb.value = "Consumer Heartbeat :" + str(len(self.lv_consumer_hb.controls))
             self.update()
 
         def button_delete(e):
