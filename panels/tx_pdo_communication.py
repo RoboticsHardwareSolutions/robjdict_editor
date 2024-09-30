@@ -4,6 +4,35 @@ from can import Message
 import flet as ft
 
 
+def size_data_type(value):
+    '''Get data size in bits (dynamic types like DOMAIN, VISIBLE_STRING, etc will return 0)'''
+    size = 0
+
+    if value in [canopen.objectdictionary.BOOLEAN, canopen.objectdictionary.INTEGER8,
+                 canopen.objectdictionary.UNSIGNED8]:
+        size = 8
+    elif value in [canopen.objectdictionary.INTEGER16, canopen.objectdictionary.UNSIGNED16]:
+        size = 16
+    elif value in [canopen.objectdictionary.INTEGER24, canopen.objectdictionary.UNSIGNED24]:
+        size = 24
+    elif value in [canopen.objectdictionary.INTEGER32, canopen.objectdictionary.UNSIGNED32,
+                   canopen.objectdictionary.REAL32]:
+        size = 32
+    elif value in [canopen.objectdictionary.INTEGER40, canopen.objectdictionary.UNSIGNED40]:
+        size = 40
+    elif value in [canopen.objectdictionary.INTEGER48, canopen.objectdictionary.UNSIGNED48,
+                   canopen.objectdictionary.TIME_OF_DAY,
+                   canopen.objectdictionary.TIME_DIFFERENCE]:
+        size = 48
+    elif value in [canopen.objectdictionary.INTEGER56, canopen.objectdictionary.UNSIGNED56]:
+        size = 56
+    elif value in [canopen.objectdictionary.INTEGER64, canopen.objectdictionary.UNSIGNED64,
+                   canopen.objectdictionary.REAL64]:
+        size = 64
+
+    return size
+
+
 class PDOField(ft.ResponsiveRow):
     def __init__(self, pdo_obj, pdo_map, event):
         super().__init__()
@@ -20,14 +49,58 @@ class PDOField(ft.ResponsiveRow):
             ), col=1
         )
 
+        def check_item_clicked(e):
+            e.control.checked = not e.control.checked
+            self.update()
+
+        self.__pb_delete = ft.PopupMenuButton(
+            items=[
+                ft.PopupMenuItem(text="Item 1"),
+                ft.PopupMenuItem(icon=ft.icons.POWER_INPUT, text="Check power"),
+                ft.PopupMenuItem(
+                    content=ft.Row(
+                        [
+                            ft.Icon(ft.icons.HOURGLASS_TOP_OUTLINED),
+                            ft.Text("Item with a custom content"),
+                        ]
+                    ),
+                    on_click=lambda _: print("Button with a custom content clicked!"),
+                ),
+                ft.PopupMenuItem(),  # divider
+                ft.PopupMenuItem(
+                    text="Checked item", checked=False, on_click=check_item_clicked
+                ),
+            ],
+            height=20,
+            width=10,
+            icon_size=15,
+            visible=False,
+            col=1
+        )
+
         self.controls = [
             self.__index,
             self.__subindex,
-            self.__map_data
+            self.__map_data,
+            self.__pb_delete
         ]
 
     def insert(self, obj):
-        self.controls.insert(len(self.controls) - 1, ft.Text(obj, overflow=ft.TextOverflow.ELLIPSIS, col=1))
+        available = 12
+        for field in self.controls:
+            available -= field.col
+            if available == 0:
+                return
+
+        added_col = size_data_type(obj.data_type) / 8
+        if available < added_col:
+            return
+        if available == added_col:
+            self.__map_data.visible = False
+        self.__pb_delete.visible = True
+        self.controls.insert(len(self.controls) - 2,
+                             ft.Text(f'0x{obj.index:04X}/{obj.subindex:02X}', overflow=ft.TextOverflow.ELLIPSIS,
+                                     col=size_data_type(obj.data_type) / 8))
 
 
 class TPdoCommunicationPanel(ft.ResponsiveRow):
@@ -66,7 +139,8 @@ class TPdoCommunicationPanel(ft.ResponsiveRow):
                                     ft.ResponsiveRow([
                                         ft.Text(f'0x{obj.index:04X}', col=1.5),
                                         ft.Text(f'0x{subobj.subindex:02X}', col=1),
-                                        ft.Text(f'{subobj.name}', col=6)
+                                        ft.Text(f'{subobj.name}', col=6),
+                                        ft.Text(f'{size_data_type(subobj.data_type)}', col=2),
                                     ]
                                     ),
                                     content_feedback=ft.Text(
@@ -80,10 +154,9 @@ class TPdoCommunicationPanel(ft.ResponsiveRow):
                 if src.uid == e.src_id:
                     pdo_field = e.control.parent.parent
                     if isinstance(src, ft.Draggable) and isinstance(pdo_field, PDOField):
-                        index = src.content.controls[0].value
-                        subindex = src.content.controls[1].value
+                        index = int(src.content.controls[0].value, 16)
+                        subindex = int(src.content.controls[1].value, 16)
                         name = src.content.controls[2].value
-
                         pdo_field.insert(od.object_dictionary[index][subindex])
                     break
             self.update()
