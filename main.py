@@ -47,9 +47,10 @@ def main(page: ft.Page):
     page.overlay.append(pick_files_dialog)
 
     def save_od(e):
-        device = devices.tabs[devices.selected_index - 1]
-        if isinstance(device, DeviceTab):
-            device.save_device()
+        if devices.selected_index != 0:
+            device = devices.tabs[devices.selected_index - 1]
+            if isinstance(device, DeviceTab):
+                device.save_device()
 
     # Create the top menu bar
     menubar = ft.AppBar(
