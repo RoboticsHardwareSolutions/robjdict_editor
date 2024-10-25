@@ -121,10 +121,9 @@ class TPdoCommunicationPanel(ft.ResponsiveRow):
             ft.Text("Byte 6", col=1),
             ft.Text("Byte 7", col=1),
             ft.Text("Byte 8", col=1),
-        ]
+        ], col=10
         )
-        self.lv_tpdo = ft.ListView(expand=1, spacing=10, padding=20, height=200, col=10)
-        self.lv_tpdo.controls.append(self.__dt_tpdo)
+        self.lv_tpdo = ft.ListView(expand=1, spacing=10, height=200, col=10)
 
         # Check records
         for obj in od.object_dictionary.values():
@@ -175,5 +174,7 @@ class TPdoCommunicationPanel(ft.ResponsiveRow):
         # main control
         self.controls = [
             self.lv_od,
+            ft.Divider(),
+            self.__dt_tpdo,
             self.lv_tpdo
         ]
