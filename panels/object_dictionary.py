@@ -10,8 +10,7 @@ class ObjectDictionaryField(ft.ExpansionPanel):
         super().__init__()
         self.__obj = obj
         self.index = obj.index
-        self.name = obj.name
-        self.header = ft.ListTile(title=ft.Text(f'0x{self.index:04X} {self.name}'))
+        self.header = ft.ListTile(title=ft.Text(f'0x{self.__obj.index:04X} {self.__obj.name}'))
         self.can_tap_header = True
 
         if isinstance(obj, canopen.objectdictionary.ODRecord):
@@ -44,18 +43,56 @@ class ObjectDictionaryField(ft.ExpansionPanel):
     def get_object(self):
         return self.__obj
 
+    def settings_panel_ctrl(self, column: ft.Column, delete_btn: ft.ElevatedButton):
+        __tf_name = ft.TextField(label="Name", value=f'{self.__obj.name}')
+        __tf_index = ft.TextField(label="Index", value=f'{self.__obj.index}')
+
+        def button_clicked(e):
+            self.__obj.name = __tf_name.value
+            self.header = ft.ListTile(title=ft.Text(f'0x{self.__obj.index:04X} {self.__obj.name}'))
+            self.update()
+
+        column.controls.clear()
+        column.controls.append(ft.Text(f'0x{self.__obj.index:04X} {self.__obj.name}',
+                                       style=ft.TextStyle(weight=ft.FontWeight.BOLD, size=20)))
+        column.controls.append(ft.Divider())
+        column.controls.append(__tf_name)
+        column.controls.append(__tf_index)
+        column.controls.append(ft.ElevatedButton(text="Кнопка", on_click=button_clicked))
+        column.controls.append(delete_btn)
+
 
 class ObjDictPanel(ft.ResponsiveRow):
     def __init__(self, od):
         super().__init__()
         self.visible = False
         self.lv_obj = ft.ListView(expand=1, spacing=10, padding=20, height=400, col=4)
+        self.settings_obj = ft.Column()
+
+        def delete_clicked(e):
+            setting_ctrl = e.control.parent.controls
+            for i in range(len(setting_ctrl)):
+                if isinstance(setting_ctrl[i], ft.TextField):
+                    label = setting_ctrl[i].label
+                    value = setting_ctrl[i].value
+                    if label == 'Index':
+                        od.object_dictionary.__delitem__(int(value))
+
+                        for element in self.__panel.controls:
+                            if int(value) == element.index:
+                                self.__panel.controls.remove(element)
+                                self.settings_obj.controls.clear()
+                                self.update()
+                                return
+
+        self.__del_obj = ft.ElevatedButton(text="Delete object", on_click=delete_clicked)
 
         def handle_change(e: ft.ControlEvent):
             i = int(e.data)
-            print(f"change on panel with index {i}")
+            self.__panel.controls[i].settings_panel_ctrl(self.settings_obj, self.__del_obj)
             target = self.__panel.controls[i].get_object()
             print(f"target: {target.name}")
+            self.update()
 
         self.__panel = ft.ExpansionPanelList(
             expand_icon_color=ft.colors.AMBER,
@@ -68,6 +105,7 @@ class ObjDictPanel(ft.ResponsiveRow):
         for obj in od.object_dictionary.values():
             index = ObjectDictionaryField(obj)
             self.__panel.controls.append(index)
+
         self.lv_obj.controls.append(self.__panel)
 
         self.controls = [
@@ -76,8 +114,15 @@ class ObjDictPanel(ft.ResponsiveRow):
                 [
                     ft.Container(
                         self.lv_obj,
+                        border=ft.border.all(1, ft.colors.BLUE_400),
+                        border_radius=ft.border_radius.all(10),
                         col=4,
                     ),
+                    ft.Container(
+                        content=self.settings_obj,
+                        border=ft.border.all(1, ft.colors.BLACK),
+                        col=8
+                    )
                 ],
             ),
         ]
