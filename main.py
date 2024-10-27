@@ -15,6 +15,7 @@ def main(page: ft.Page):
             if isinstance(tab, DeviceTab):
                 tab.life_communication.lv_consumer_hb.height = page.height - 200
                 tab.sdo_communication.lv_sdo_client.height = page.height - 200
+                tab.obj_dict.lv_obj.height = page.height - 200
             page.update()
 
     page.on_resized = page_resize
