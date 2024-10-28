@@ -34,6 +34,8 @@ def main(page: ft.Page):
 
     # File picker
     def pick_files_result(e: ft.FilePickerResultEvent):
+        if e.files is None:
+            return
         names_new_tabs = list(map(lambda f: f.path, e.files))
         for new_tab in names_new_tabs:
             btn = ft.IconButton(
