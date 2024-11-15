@@ -13,7 +13,7 @@ class SdoCommunicationPanel(ft.ResponsiveRow):
         self.tf_sdo_server_tx = ft.TextField(label="COB ID Tx SDO", value="0x580", col=2)
         self.tf_sdo_server_rx = ft.TextField(label="COB ID Rx SDO", value="0x600", col=2)
 
-        self.lv_sdo_client = ft.ListView(expand=1, spacing=10, padding=20, height=400, col=8)
+        self.lv_sdo_client = ft.ListView(expand=1, spacing=10, padding=20, height=370)
         self.t_sdo_client = ft.Text("SDO Client")
 
         def button_first_sdo_cli(e):
@@ -122,11 +122,17 @@ class SdoCommunicationPanel(ft.ResponsiveRow):
                     ),
                 ],
             ),
+
             ft.ResponsiveRow(
                 [
                     self.tf_sdo_server_tx,
                     self.tf_sdo_server_rx,
-                    self.lv_sdo_client,
+                    ft.Container(
+                        self.lv_sdo_client,
+                        col=8,
+                        border=ft.border.all(1, ft.colors.BLACK),
+                        border_radius=ft.border_radius.all(5),
+                    ),
                 ],
             ),
         ]
