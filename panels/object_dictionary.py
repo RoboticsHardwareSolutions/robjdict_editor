@@ -16,21 +16,23 @@ class ObjectDictionaryField(ft.ExpansionPanel):
 
     def __build(self):
         def handle_delete(e: ft.ControlEvent):
-            self.content.controls.clear()
-            for subobj in self.__obj.values():
-                if subobj.subindex == 0:
-                    subobj.default = subobj.default - 1
-                    subobj.default_raw = str(subobj.default)
-                if subobj.subindex == e.control.data.subindex:
-                    self.__obj.pop(subobj.subindex)
-                if subobj.subindex > e.control.data.subindex:
-                    self.__obj.pop(subobj.subindex)
-                    subobj.subindex = subobj.subindex - 1
-                    self.__obj.add_member(subobj)
+            self.content.controls.clear()  # Clear all subobj in flet
+            if isinstance(self.__obj, canopen.objectdictionary.ODRecord | canopen.objectdictionary.ODArray):  # if object is RECORD
+                for subobj in self.__obj.values():
+                    if subobj.subindex == 0:  # decrease num of subobj
+                        subobj.default = subobj.default - 1
+                        subobj.default_raw = str(subobj.default)
+                    if subobj.subindex == e.control.data.subindex:  # delete subobj
+                        del self.__obj.subindices[subobj.subindex]
+                    if subobj.subindex > e.control.data.subindex:  # renumbering the remaining elements
+                        del self.__obj.subindices[subobj.subindex]
+                        subobj.subindex = subobj.subindex - 1
+                        self.__obj.add_member(subobj)
+
             self.__build()
             self.update()
 
-        if isinstance(self.__obj, canopen.objectdictionary.ODRecord):
+        if isinstance(self.__obj, canopen.objectdictionary.ODArray | canopen.objectdictionary.ODRecord):
             self.content = ft.Column()
             for subobj in self.__obj.values():
                 if subobj.subindex != 0:
@@ -38,17 +40,6 @@ class ObjectDictionaryField(ft.ExpansionPanel):
                         title=ft.Text(f"0x{subobj.subindex:02X} {subobj.name}"),
                         trailing=ft.IconButton(ft.icons.DELETE, on_click=handle_delete, data=subobj),
                         # subtitle=ft.Text(f"Press the icon to delete panel"),
-                        # trailing=ft.IconButton(ft.icons.DELETE, on_click=handle_delete, data=exp),
-                    )
-                    self.content.controls.append(lt)
-        if isinstance(self.__obj, canopen.objectdictionary.ODArray):
-            self.content = ft.Column()
-            for subobj in self.__obj.values():
-                if subobj.subindex != 0:
-                    lt = ft.ListTile(
-                        title=ft.Text(f"0x{subobj.subindex:02X} {subobj.name}"),
-                        # subtitle=ft.Text(f"Press the icon to delete panel"),
-                        # trailing=ft.IconButton(ft.icons.DELETE, on_click=handle_delete, data=exp),
                     )
                     self.content.controls.append(lt)
         if isinstance(self.__obj, canopen.objectdictionary.ODVariable):
@@ -59,7 +50,6 @@ class ObjectDictionaryField(ft.ExpansionPanel):
                 # trailing=ft.IconButton(ft.icons.DELETE, on_click=handle_delete, data=exp),
             )
             self.content.controls.append(lt)
-
 
     # def get_object(self):
     #     return self.__obj
