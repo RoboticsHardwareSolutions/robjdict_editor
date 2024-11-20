@@ -14,7 +14,7 @@ class ObjectDictionaryField(ft.ExpansionPanel):
         self.can_tap_header = True
         self.__build()
 
-    def __build(self):
+    def new_list_tile(self, obj: canopen.objectdictionary.ODVariable):
         def handle_delete(e: ft.ControlEvent):
             self.content.controls.clear()  # Clear all subobj in flet
             if isinstance(self.__obj, canopen.objectdictionary.ODRecord | canopen.objectdictionary.ODArray):  # if object is RECORD
@@ -32,15 +32,18 @@ class ObjectDictionaryField(ft.ExpansionPanel):
             self.__build()
             self.update()
 
+        return ft.ListTile(
+                        title=ft.Text(f"0x{obj.subindex:02X} {obj.name}"),
+                        trailing=ft.IconButton(ft.icons.DELETE, on_click=handle_delete, data=obj),
+                        # subtitle=ft.Text(f"Press the icon to delete panel"),
+                    )
+
+    def __build(self):
         if isinstance(self.__obj, canopen.objectdictionary.ODArray | canopen.objectdictionary.ODRecord):
             self.content = ft.Column()
             for subobj in self.__obj.values():
                 if subobj.subindex != 0:
-                    lt = ft.ListTile(
-                        title=ft.Text(f"0x{subobj.subindex:02X} {subobj.name}"),
-                        trailing=ft.IconButton(ft.icons.DELETE, on_click=handle_delete, data=subobj),
-                        # subtitle=ft.Text(f"Press the icon to delete panel"),
-                    )
+                    lt = self.new_list_tile(subobj)
                     self.content.controls.append(lt)
         if isinstance(self.__obj, canopen.objectdictionary.ODVariable):
             self.content = ft.Column()
@@ -51,9 +54,6 @@ class ObjectDictionaryField(ft.ExpansionPanel):
             )
             self.content.controls.append(lt)
 
-    # def get_object(self):
-    #     return self.__obj
-
     def settings_panel_ctrl(self, column: ft.Column, delete_btn: ft.ElevatedButton):
         __tf_name = ft.TextField(label="Name", value=f'{self.__obj.name}')
         __tf_index = ft.TextField(label="Index", value=f'{self.__obj.index}')
@@ -63,6 +63,15 @@ class ObjectDictionaryField(ft.ExpansionPanel):
             self.header = ft.ListTile(title=ft.Text(f'0x{self.__obj.index:04X} {self.__obj.name}'))
             self.update()
 
+        def add_clicked(e):
+            subindex = canopen.objectdictionary.ODVariable("Undefined", self.__obj.index, len(self.__obj.values()))
+            subindex.access_type = "rw"
+            subindex.data_type = canopen.objectdictionary.datatypes.UNSIGNED8
+            lt = self.new_list_tile(subindex)
+            self.content.controls.append(lt)
+            self.__obj.add_member(subindex)
+            self.update()
+
         column.controls.clear()
         column.controls.append(ft.Text(f'0x{self.__obj.index:04X} {self.__obj.name}',
                                        style=ft.TextStyle(weight=ft.FontWeight.BOLD, size=20)))
@@ -70,6 +79,8 @@ class ObjectDictionaryField(ft.ExpansionPanel):
         column.controls.append(__tf_name)
         column.controls.append(__tf_index)
         column.controls.append(ft.ElevatedButton(text="Save", on_click=save_clicked))
+        if isinstance(self.__obj, canopen.objectdictionary.ODRecord | canopen.objectdictionary.ODArray):  # if object is RECORD
+            column.controls.append(ft.ElevatedButton(text="Add subindex", on_click=add_clicked))
         column.controls.append(delete_btn)
 
 
