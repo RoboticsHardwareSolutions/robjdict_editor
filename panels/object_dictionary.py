@@ -30,34 +30,30 @@ data_type_map = {
     canopen.objectdictionary.UNSIGNED48: "UNSIGNED48",
     canopen.objectdictionary.UNSIGNED56: "UNSIGNED56",
     canopen.objectdictionary.UNSIGNED64: "UNSIGNED64",
-    canopen.objectdictionary.PDO_COMMUNICATION_PARAMETER: "PDO_COMMUNICATION_PARAMETER",
+    canopen.objectdictionary.PDO_COMMUNICATION_PARAMETER: "PDO_COMMUNICATION_PARAM",
     canopen.objectdictionary.PDO_MAPPING: "PDO_MAPPING",
     canopen.objectdictionary.SDO_PARAMETER: "SDO_PARAMETER",
     canopen.objectdictionary.IDENTITY: "IDENTITY",
+}
+
+data_access_map = {
+    0: "rw",
+    1: "ro",
+    2: "wo",
+    3: "const",
 }
 
 
 class ObjectDictionaryField(ft.ExpansionPanel):
     def __init__(self, obj: canopen.objectdictionary, column: ft.Column):
         super().__init__()
+        # self.__parent = self.parent.parent.parent.parent.parent
         self.__obj = obj
         self.index = obj.index
         self.header = ft.ListTile(title=ft.Text(f'0x{self.__obj.index:04X} {self.__obj.name}'))
         self.can_tap_header = True
-        self.__build_list_objects()
+        self.__build_object_list()
         self.__column = column
-
-    def __build_settings_variable_panel(self, e: ft.ControlEvent):
-        lt = e.control
-        obj = e.control.data
-        if not isinstance(obj, canopen.objectdictionary.ODVariable):  # I think it may be only ODVariable
-            print("obj is no an ODVariable!")
-            return
-        if not isinstance(lt, ft.ListTile):  # I think it may be only ODVariable
-            print("lt is no an ft.ListTile! It's impossible!!!")
-            return
-        # TODO like settings_panel_ctrl
-        self.update()
 
     # Create new list tile (only Array and Record)
     # Because there are subindexes and they may be deleted
@@ -77,7 +73,7 @@ class ObjectDictionaryField(ft.ExpansionPanel):
                         subobj.subindex = subobj.subindex - 1
                         self.__obj.add_member(subobj)
 
-            self.__build_list_objects()
+            self.__build_object_list()
             self.update()
 
         return ft.ListTile(
@@ -88,7 +84,7 @@ class ObjectDictionaryField(ft.ExpansionPanel):
             subtitle=ft.Text(f"type: {data_type_map[obj.data_type]}\naccess: {obj.access_type}"),
         )
 
-    def __build_list_objects(self):
+    def __build_object_list(self):
         if isinstance(self.__obj, canopen.objectdictionary.ODArray | canopen.objectdictionary.ODRecord):
             self.content = ft.Column()
             for subobj in self.__obj.values():
@@ -104,18 +100,61 @@ class ObjectDictionaryField(ft.ExpansionPanel):
             )
             self.content.controls.append(lt)
 
+    def __build_settings_variable_panel(self, e: ft.ControlEvent):
+        lt = e.control
+        obj = e.control.data
+        if not isinstance(obj, canopen.objectdictionary.ODVariable):  # I think it may be only ODVariable
+            print("obj is no an ODVariable!")
+            return
+        if not isinstance(lt, ft.ListTile):  # I think it may be only ODVariable
+            print("lt is no an ft.ListTile! It's impossible!!!")
+            return
+
+        __tf_name = ft.TextField(label="Name", value=f'{obj.name}')
+        __tf_default = ft.TextField(label="Default", value=f'{obj.default}')
+        __dd_data_type = ft.Dropdown()
+        for i in data_type_map:
+            __dd_data_type.options.append(ft.dropdown.Option(f'{data_type_map[i]}'))
+        __dd_data_type.value = data_type_map[obj.data_type]
+        __dd_access_type = ft.Dropdown()
+        for i in data_access_map:
+            __dd_access_type.options.append(ft.dropdown.Option(f'{data_access_map[i]}'))
+        __dd_access_type.value = obj.access_type
+
+        def save_clicked(e: ft.ControlEvent):
+            obj.name = __tf_name.value
+            obj.default = __tf_default.value
+            for data_type in data_type_map:
+                if __dd_data_type.value == data_type_map[data_type]:
+                    obj.data_type = data_type
+            obj.access_type = __dd_access_type.value
+            self.__build_object_list()
+            self.page.update()
+
+        self.__column.controls.clear()
+        self.__column.controls.append(ft.Text(f'0x{obj.index:04X}/{obj.subindex:02X} {obj.name}',
+                                              style=ft.TextStyle(weight=ft.FontWeight.BOLD, size=20)))
+        self.__column.controls.append(ft.Divider())
+        self.__column.controls.append(__tf_name)
+        self.__column.controls.append(__tf_default)
+        self.__column.controls.append(__dd_data_type)
+        self.__column.controls.append(__dd_access_type)
+        self.__column.controls.append(ft.ElevatedButton(text="Save", on_click=save_clicked))
+        self.page.update()
+
     def build_settings_panel(self, delete_btn: ft.ElevatedButton):
         __tf_name = ft.TextField(label="Name", value=f'{self.__obj.name}')
         __tf_index = ft.TextField(label="Index", value=f'{self.__obj.index}')
 
-        def save_clicked(e):
+        def save_clicked(e: ft.ControlEvent):
             self.__obj.name = __tf_name.value
             self.header = ft.ListTile(title=ft.Text(f'0x{self.__obj.index:04X} {self.__obj.name}'))
             self.update()
 
-        def add_clicked(e):
+        def add_clicked(e: ft.ControlEvent):
             subindex = canopen.objectdictionary.ODVariable("Undefined", self.__obj.index, len(self.__obj.values()))
             subindex.access_type = "rw"
+            subindex.default = 0
             subindex.data_type = canopen.objectdictionary.datatypes.UNSIGNED8
             lt = self.__new_list_tile(subindex)
             self.content.controls.append(lt)
@@ -133,6 +172,7 @@ class ObjectDictionaryField(ft.ExpansionPanel):
                       canopen.objectdictionary.ODRecord | canopen.objectdictionary.ODArray):  # if object is RECORD
             self.__column.controls.append(ft.ElevatedButton(text="Add subindex", on_click=add_clicked))
         self.__column.controls.append(delete_btn)
+        self.page.update()
 
 
 class ObjDictPanel(ft.ResponsiveRow):
@@ -145,18 +185,19 @@ class ObjDictPanel(ft.ResponsiveRow):
         def delete_clicked(e):
             setting_ctrl = e.control.parent.controls  # get control @ObjectDictionaryField
             for i in range(len(setting_ctrl)):  # get all ft controls in panel of @ObjectDictionaryField
-                if isinstance(setting_ctrl[i], ft.TextField):  # It's very stupid
-                    label = setting_ctrl[i].label  # It's @__tf_name in panel of @ObjectDictionaryField
-                    value = setting_ctrl[i].value
-                    if label == 'Index':
-                        od.object_dictionary.__delitem__(int(value))
+                if not isinstance(setting_ctrl[i], ft.TextField):  # It's very stupid
+                    return
+                label = setting_ctrl[i].label  # It's @__tf_name in panel of @ObjectDictionaryField
+                value = setting_ctrl[i].value
+                if label == 'Index':
+                    od.object_dictionary.__delitem__(int(value))
 
-                        for element in self.__panel.controls:  # Search element form panel
-                            if int(value) == element.index:  # Remove element form panel
-                                self.__panel.controls.remove(element)
-                                self.settings_obj.controls.clear()
-                                self.update()
-                                return
+                    for element in self.__panel.controls:  # Search element form panel
+                        if int(value) == element.index:  # Remove element form panel
+                            self.__panel.controls.remove(element)
+                            self.settings_obj.controls.clear()
+                            self.update()
+                            return
 
         self.__del_obj = ft.ElevatedButton(text="Delete object", on_click=delete_clicked)
 
@@ -165,7 +206,6 @@ class ObjDictPanel(ft.ResponsiveRow):
             self.__panel.controls[i].build_settings_panel(self.__del_obj)  # view setting panel
             # target = self.__panel.controls[i].get_object()  # get field from OD
             # print(f"target: {target.name}")
-            self.update()
 
         self.__panel = ft.ExpansionPanelList(
             expand_icon_color=ft.colors.AMBER,
