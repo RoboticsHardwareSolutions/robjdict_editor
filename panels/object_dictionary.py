@@ -48,13 +48,21 @@ data_access_map = {
 class ObjectDictionaryField(ft.ExpansionPanel):
     def __init__(self, obj: canopen.objectdictionary, column: ft.Column):
         super().__init__()
-        # self.__parent = self.parent.parent.parent.parent.parent
         self.__obj = obj
         self.index = obj.index
-        self.header = ft.ListTile(title=ft.Text(f'0x{self.__obj.index:04X} {self.__obj.name}'))
+        self.__subtitle = None
+        if isinstance(self.__obj, canopen.objectdictionary.ODVariable):
+            self.__subtitle = ft.Text("Variable")
+        if isinstance(self.__obj, canopen.objectdictionary.ODArray):
+            self.__subtitle = ft.Text("Array")
+        if isinstance(self.__obj, canopen.objectdictionary.ODRecord):
+            self.__subtitle = ft.Text("Record")
+        self.header = ft.ListTile(title=ft.Text(f'0x{self.__obj.index:04X} {self.__obj.name}'),
+                                  subtitle=self.__subtitle)
         self.can_tap_header = True
         self.__build_object_list()
         self.__column = column
+        self.subtitle = ft.Text("Variable")
 
     # Create new list tile (only Array and Record)
     # Because there are subindexes and they may be deleted
