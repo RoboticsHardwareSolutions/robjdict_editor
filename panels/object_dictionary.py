@@ -2,6 +2,7 @@ import canopen
 import can
 from can import Message
 import flet as ft
+from canopen import ObjectDictionary
 from flet_core import ButtonStyle
 
 data_type_map = {
@@ -96,6 +97,7 @@ class ObjectDictionaryField(ft.ExpansionPanel):
             lt = ft.ListTile(
                 title=ft.Text(f"0x{self.__obj.subindex:02X} {self.__obj.name}"),
                 on_click=self.__build_settings_variable_panel,
+                data=self.__obj,
                 subtitle=ft.Text(f"type: {data_type_map[self.__obj.data_type]}\naccess: {self.__obj.access_type}"),
             )
             self.content.controls.append(lt)
@@ -124,6 +126,7 @@ class ObjectDictionaryField(ft.ExpansionPanel):
         def save_clicked(e: ft.ControlEvent):
             obj.name = __tf_name.value
             obj.default = __tf_default.value
+            obj.default_raw = __tf_default.value
             for data_type in data_type_map:
                 if __dd_data_type.value == data_type_map[data_type]:
                     obj.data_type = data_type
@@ -159,7 +162,7 @@ class ObjectDictionaryField(ft.ExpansionPanel):
             lt = self.__new_list_tile(subindex)
             self.content.controls.append(lt)
             self.__obj.add_member(subindex)
-            self.update()
+            self.page.update()
 
         self.__column.controls.clear()
         self.__column.controls.append(ft.Text(f'0x{self.__obj.index:04X} {self.__obj.name}',
@@ -204,8 +207,6 @@ class ObjDictPanel(ft.ResponsiveRow):
         def handle_change(e: ft.ControlEvent):
             i = int(e.data)
             self.__panel.controls[i].build_settings_panel(self.__del_obj)  # view setting panel
-            # target = self.__panel.controls[i].get_object()  # get field from OD
-            # print(f"target: {target.name}")
 
         self.__panel = ft.ExpansionPanelList(
             expand_icon_color=ft.colors.AMBER,
@@ -222,22 +223,76 @@ class ObjDictPanel(ft.ResponsiveRow):
 
         self.lv_obj.controls.append(self.__panel)
 
+        def handle_close(e: ft.ControlEvent):
+            ctrls = dlg_modal.content.controls
+            obj_index = None
+            if e.control.text == "Variable":
+                obj_index = canopen.objectdictionary.ODVariable(f'{ctrls[0].value}', int(ctrls[1].value, 16))
+                obj_index.access_type = "ro"
+                obj_index.data_type = canopen.objectdictionary.datatypes.UNSIGNED8
+                obj_index.default = 0
+            elif e.control.text == "Array":
+                obj_index = canopen.objectdictionary.ODArray(f'{ctrls[0].value}', int(ctrls[1].value, 16))
+                obj_subindex = canopen.objectdictionary.ODVariable("Number of Entries", int(ctrls[1].value, 16), 0)
+                obj_subindex.access_type = "ro"
+                obj_subindex.data_type = canopen.objectdictionary.datatypes.UNSIGNED8
+                obj_subindex.default = 0
+                obj_index.add_member(obj_subindex)
+            elif e.control.text == "Record":
+                obj_index = canopen.objectdictionary.ODRecord(f'{ctrls[0].value}', int(ctrls[1].value, 16))
+                obj_subindex = canopen.objectdictionary.ODVariable("Number of Entries", int(ctrls[1].value, 16), 0)
+                obj_subindex.access_type = "ro"
+                obj_subindex.data_type = canopen.objectdictionary.datatypes.UNSIGNED8
+                obj_subindex.default = 0
+                obj_index.add_member(obj_subindex)
+
+            od.object_dictionary.add_object(obj_index)
+            # Append new object
+            # TODO (p.firsov) Insert
+            # TODO (p.firsov) Check duplicate
+            __index = ObjectDictionaryField(obj_index, self.settings_obj)
+            self.__panel.controls.append(__index)
+            self.update()
+            self.page.close(dlg_modal)
+
+        dlg_modal = ft.AlertDialog(
+            modal=True,
+            title=ft.Text("Please confirm"),
+            content=ft.Column(
+                controls=[
+                    ft.TextField(label="Name", value="Undefined"),
+                    ft.TextField(label="Index", value="0x2000"),
+                ],
+                height=100
+            ),
+            actions=[
+                ft.TextButton("Variable", on_click=handle_close),
+                ft.TextButton("Array", on_click=handle_close),
+                ft.TextButton("Record", on_click=handle_close),
+            ],
+        )
+
         self.controls = [
             ft.ResponsiveRow(
                 [
                     ft.Container(
                         self.lv_obj,
-                        border=ft.border.all(1, ft.colors.BLUE_400),
+                        border=ft.border.all(1, ft.colors.BLACK),
                         border_radius=ft.border_radius.all(10),
                         col=4,
                     ),
-                    ft.Container(
-                        content=ft.Container(
-                            margin=ft.margin.all(16),
-                            content=self.settings_obj,
-                        ),
-                        border=ft.border.all(1, ft.colors.BLUE_400),
-                        border_radius=ft.border_radius.all(10),
+                    ft.Column(
+                        controls=[
+                            ft.Container(
+                                content=ft.Container(
+                                    margin=ft.margin.all(16),
+                                    content=self.settings_obj,
+                                ),
+                                border=ft.border.all(1, ft.colors.BLACK),
+                                border_radius=ft.border_radius.all(10)
+                            ),
+                            ft.ElevatedButton(text="Create Object", on_click=lambda e: self.page.open(dlg_modal))
+                        ],
                         col=8
                     )
                 ],
