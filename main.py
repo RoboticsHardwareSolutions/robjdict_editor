@@ -21,7 +21,7 @@ def main(page: ft.Page):
     page.on_resized = page_resize
 
     devices = ft.Tabs(
-        selected_index=1,
+        selected_index=0,
         animation_duration=300,
         expand=1,
     )
@@ -50,10 +50,12 @@ def main(page: ft.Page):
     page.overlay.append(pick_files_dialog)
 
     def save_od(e):
-        if devices.selected_index != 0:
+        try:
             device = devices.tabs[devices.selected_index - 1]
             if isinstance(device, DeviceTab):
                 device.save_device()
+        except IndexError:
+            return
 
     # Create the top menu bar
     menubar = ft.AppBar(
