@@ -34,11 +34,10 @@ def size_bits_data_type(value):
 
 
 class PDOField(ft.ResponsiveRow):
-    def __init__(self, pdo_obj, pdo_map, event):
+    def __init__(self, pdo_obj, event):
         super().__init__()
         self.__index = ft.Text(f'0x{pdo_obj.index:04X}', col=1)
         self.__subindex = ft.Text(f'0x{pdo_obj.subindices[1].default:03X}', col=1)
-        self.__map = pdo_map
 
         self.__map_data = ft.Container(
             ft.DragTarget(
@@ -167,7 +166,8 @@ class TPdoCommunicationPanel(ft.ResponsiveRow):
                     # for tpdo_param in tpdo_params.values():
                     #     print(f'  {tpdo_param.subindex}: {tpdo_param.name}')
                     tpdo_map = od.object_dictionary[tpdo_params.index + 0x200]
-                    tpdo_field = PDOField(tpdo_params, tpdo_map, drag_accept)
+                    tpdo_field = PDOField(tpdo_params, drag_accept)
+                    # tpdo_field.insert(od.object_dictionary[index][subindex])
                     self.lv_tpdo.controls.append(tpdo_field)
 
         # main control

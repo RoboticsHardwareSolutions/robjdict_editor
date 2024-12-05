@@ -62,7 +62,6 @@ class ObjectDictionaryField(ft.ExpansionPanel):
         self.can_tap_header = True
         self.__build_object_list()
         self.__column = column
-        self.subtitle = ft.Text("Variable")
 
     # Create new list tile (only Array and Record)
     # Because there are subindexes and they may be deleted
@@ -130,6 +129,7 @@ class ObjectDictionaryField(ft.ExpansionPanel):
         for i in data_access_map:
             __dd_access_type.options.append(ft.dropdown.Option(f'{data_access_map[i]}'))
         __dd_access_type.value = obj.access_type
+        __cb_mappable = ft.Checkbox(label="Mappable", value=obj.pdo_mappable)
 
         def save_clicked(e: ft.ControlEvent):
             obj.name = __tf_name.value
@@ -139,6 +139,7 @@ class ObjectDictionaryField(ft.ExpansionPanel):
                 if __dd_data_type.value == data_type_map[data_type]:
                     obj.data_type = data_type
             obj.access_type = __dd_access_type.value
+            obj.pdo_mappable = __cb_mappable.value
             self.__build_object_list()
             self.page.update()
 
@@ -150,7 +151,7 @@ class ObjectDictionaryField(ft.ExpansionPanel):
         self.__column.controls.append(__tf_default)
         self.__column.controls.append(__dd_data_type)
         self.__column.controls.append(__dd_access_type)
-        self.__column.controls.append(ft.ElevatedButton(text="Save", on_click=save_clicked))
+        self.__column.controls.append(ft.Row(controls=[__cb_mappable, ft.ElevatedButton(text="Save", on_click=save_clicked)]))
         self.page.update()
 
     def build_settings_panel(self, delete_btn: ft.ElevatedButton):
@@ -193,6 +194,7 @@ class ObjDictPanel(ft.ResponsiveRow):
         self.lv_obj = ft.ListView(expand=1, spacing=10, padding=20, height=400, col=4)
         self.settings_obj = ft.Column(wrap=True, )
 
+        ################### Delete Index ###################
         def delete_clicked(e):
             setting_ctrl = e.control.parent.controls  # get control @ObjectDictionaryField
             for i in range(len(setting_ctrl)):  # get all ft controls in panel of @ObjectDictionaryField
@@ -212,10 +214,12 @@ class ObjDictPanel(ft.ResponsiveRow):
 
         self.__del_obj = ft.ElevatedButton(text="Delete object", on_click=delete_clicked)
 
-        def handle_change(e: ft.ControlEvent):
+        ################### Search all objects ###################
+        def handle_change(e: ft.ControlEvent):  # If check an index
             i = int(e.data)
             self.__panel.controls[i].build_settings_panel(self.__del_obj)  # view setting panel
 
+        # panel with objects
         self.__panel = ft.ExpansionPanelList(
             expand_icon_color=ft.colors.AMBER,
             col=4,
@@ -231,6 +235,7 @@ class ObjDictPanel(ft.ResponsiveRow):
 
         self.lv_obj.controls.append(self.__panel)
 
+        ################### Create new Index ###################
         def handle_close(e: ft.ControlEvent):
             ctrls = dlg_modal.content.controls
             obj_index = None
@@ -280,6 +285,7 @@ class ObjDictPanel(ft.ResponsiveRow):
             ],
         )
 
+        ################### Felling window ###################
         self.controls = [
             ft.ResponsiveRow(
                 [
