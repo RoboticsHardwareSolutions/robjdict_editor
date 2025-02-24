@@ -7,7 +7,7 @@ from panels.sdo_communication import SdoCommunicationPanel
 from panels.tx_pdo_communication import TPdoCommunicationPanel
 from panels.rx_pdo_communication import RPdoCommunicationPanel
 from panels.object_dictionary import ObjDictPanel
-
+from virtual import nnode
 
 class DeviceTab(ft.Tab):
     CTRL_DEVICE_INFO = "Device info"
@@ -40,6 +40,7 @@ class DeviceTab(ft.Tab):
 
         network = canopen.Network()
         self.__od = network.add_node(1, object_dictionary=self.path_to_od)
+        nnode(self.path_to_od)
         self.dev_info = DevInfoPanel(self.__od)
         self.life_communication = LifeCommunicationPanel(self.__od)
         self.sdo_communication = SdoCommunicationPanel(self.__od)
