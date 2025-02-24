@@ -40,7 +40,6 @@ class DeviceTab(ft.Tab):
 
         network = canopen.Network()
         self.__od = network.add_node(1, object_dictionary=self.path_to_od)
-
         self.dev_info = DevInfoPanel(self.__od)
         self.life_communication = LifeCommunicationPanel(self.__od)
         self.sdo_communication = SdoCommunicationPanel(self.__od)
@@ -68,45 +67,46 @@ class DeviceTab(ft.Tab):
     def __seg_btn(self, e):
         target_segment = e.control.controls[int(e.data)].value
         if target_segment == self.CTRL_DEVICE_INFO:
-            self.dev_info.visible = True
-            self.life_communication.visible = False
-            self.sdo_communication.visible = False
-            self.tx_pdo_communication.visible = False
-            self.rx_pdo_communication.visible = False
-            self.obj_dict.visible = False
+            self.content.controls[1].visible = True
+            self.content.controls[2].visible = False
+            self.content.controls[3].visible = False
+            self.content.controls[4].visible = False
+            self.content.controls[5].visible = False
+            self.content.controls[6].visible = False
         elif target_segment == self.CTRL_LIFE_COMMUNICATION:
-            self.dev_info.visible = False
-            self.life_communication.visible = True
-            self.sdo_communication.visible = False
-            self.tx_pdo_communication.visible = False
-            self.rx_pdo_communication.visible = False
-            self.obj_dict.visible = False
+            self.content.controls[1].visible = False
+            self.content.controls[2].visible = True
+            self.content.controls[3].visible = False
+            self.content.controls[4].visible = False
+            self.content.controls[5].visible = False
+            self.content.controls[6].visible = False
         elif target_segment == self.CTRL_SDO_COMMUNICATION:
-            self.dev_info.visible = False
-            self.life_communication.visible = False
-            self.sdo_communication.visible = True
-            self.tx_pdo_communication.visible = False
-            self.rx_pdo_communication.visible = False
-            self.obj_dict.visible = False
+            self.content.controls[1].visible = False
+            self.content.controls[2].visible = False
+            self.content.controls[3].visible = True
+            self.content.controls[4].visible = False
+            self.content.controls[5].visible = False
+            self.content.controls[6].visible = False
         elif target_segment == self.CTRL_TPDO_COMMUNICATION:
-            self.dev_info.visible = False
-            self.life_communication.visible = False
-            self.sdo_communication.visible = False
-            self.tx_pdo_communication.visible = True
-            self.rx_pdo_communication.visible = False
-            self.obj_dict.visible = False
+            self.content.controls[1].visible = False
+            self.content.controls[2].visible = False
+            self.content.controls[3].visible = False
+            self.content.controls[4] = TPdoCommunicationPanel(self.__od)
+            self.content.controls[4].visible = True
+            self.content.controls[5].visible = False
+            self.content.controls[6].visible = False
         elif target_segment == self.CTRL_RPDO_COMMUNICATION:
-            self.dev_info.visible = False
-            self.life_communication.visible = False
-            self.sdo_communication.visible = False
-            self.tx_pdo_communication.visible = False
-            self.rx_pdo_communication.visible = True
-            self.obj_dict.visible = False
+            self.content.controls[1].visible = False
+            self.content.controls[2].visible = False
+            self.content.controls[3].visible = False
+            self.content.controls[4].visible = False
+            self.content.controls[5].visible = True
+            self.content.controls[6].visible = False
         elif target_segment == self.CTRL_OBJECT_DICTIONARY:
-            self.dev_info.visible = False
-            self.life_communication.visible = False
-            self.sdo_communication.visible = False
-            self.tx_pdo_communication.visible = False
-            self.rx_pdo_communication.visible = False
-            self.obj_dict.visible = True
+            self.content.controls[1].visible = False
+            self.content.controls[2].visible = False
+            self.content.controls[3].visible = False
+            self.content.controls[4].visible = False
+            self.content.controls[5].visible = False
+            self.content.controls[6].visible = True
         self.update()

@@ -13,7 +13,7 @@ class LifeCommunicationPanel(ft.ResponsiveRow):
         self.te_prod_hb = ft.TextField(label="Time, ms:",
                                        col=4,
                                        value=od.object_dictionary.get_variable(0x1017, 0).default)
-        self.lv_consumer_hb = ft.ListView(expand=1, spacing=10, padding=20, height=400, col=8)
+        self.lv_consumer_hb = ft.ListView(expand=1, spacing=10, padding=20, height=370, col=8)
         self.t_consumer_hb = ft.Text("Consumer Heartbeat")
 
         def start_chb(e):
@@ -114,8 +114,16 @@ class LifeCommunicationPanel(ft.ResponsiveRow):
 
             ft.ResponsiveRow(
                 [
-                    self.te_prod_hb,
-                    self.lv_consumer_hb,
+                    ft.Container(
+                        self.te_prod_hb,
+                        col=4,
+                    ),
+                    ft.Container(
+                        self.lv_consumer_hb,
+                        col=8,
+                        border=ft.border.all(1, ft.colors.BLACK),
+                        border_radius=ft.border_radius.all(5),
+                    ),
                 ],
             ),
         ]

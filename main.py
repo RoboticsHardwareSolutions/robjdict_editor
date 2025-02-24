@@ -15,12 +15,13 @@ def main(page: ft.Page):
             if isinstance(tab, DeviceTab):
                 tab.life_communication.lv_consumer_hb.height = page.height - 200
                 tab.sdo_communication.lv_sdo_client.height = page.height - 200
+                tab.obj_dict.lv_obj.height = page.height - 200
             page.update()
 
     page.on_resized = page_resize
 
     devices = ft.Tabs(
-        selected_index=1,
+        selected_index=0,
         animation_duration=300,
         expand=1,
     )
@@ -33,6 +34,8 @@ def main(page: ft.Page):
 
     # File picker
     def pick_files_result(e: ft.FilePickerResultEvent):
+        if e.files is None:
+            return
         names_new_tabs = list(map(lambda f: f.path, e.files))
         for new_tab in names_new_tabs:
             btn = ft.IconButton(
@@ -47,9 +50,12 @@ def main(page: ft.Page):
     page.overlay.append(pick_files_dialog)
 
     def save_od(e):
-        device = devices.tabs[devices.selected_index - 1]
-        if isinstance(device, DeviceTab):
-            device.save_device()
+        try:
+            device = devices.tabs[devices.selected_index - 1]
+            if isinstance(device, DeviceTab):
+                device.save_device()
+        except IndexError:
+            return
 
     # Create the top menu bar
     menubar = ft.AppBar(
