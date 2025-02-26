@@ -1,6 +1,9 @@
 import flet as ft
 from device_tab import DeviceTab
+import os
 
+os.environ["FLET_SECRET_KEY"] = os.urandom(12).hex()
+UPLOAD_DIR = 'upload'
 
 def main(page: ft.Page):
     page.title = "Objdict editor"
@@ -9,6 +12,7 @@ def main(page: ft.Page):
     page.window.height = 600
     page.window.min_width = 1000
     page.window.width = 1000
+    progressbar = ft.ProgressBar(width=page.width, value=0, visible=False)
 
     def page_resize(e):
         for tab in devices.tabs:
@@ -33,22 +37,45 @@ def main(page: ft.Page):
                 page.update()
 
     # File picker
-    def pick_files_result(e: ft.FilePickerResultEvent):
+    def file_picker_result(e: ft.FilePickerResultEvent):
         if e.files is None:
             return
-        names_new_tabs = list(map(lambda f: f.path, e.files))
-        for new_tab in names_new_tabs:
+        files = []
+
+        for file in e.files:
+            files.append(
+                ft.FilePickerUploadFile(
+                    file.name,
+                    upload_url=page.get_upload_url(file.name, 600)
+                )
+            )
+
+        progressbar.visible = True
+        file_picker_dialog.upload(files)
+        
+        for file in files:
+            while not os.path.exists(f"{UPLOAD_DIR}/{file.name}") or progressbar.visible == True:
+                pass
             btn = ft.IconButton(
-                icon=ft.icons.CLOSE,
+                icon=ft.Icons.CLOSE,
                 on_click=button_delete,
             )
-            new_device = DeviceTab(new_tab, btn)
+            new_device = DeviceTab(f"{UPLOAD_DIR}/{file.name}", btn)
             devices.tabs.append(new_device)
             page.update()
 
-    pick_files_dialog = ft.FilePicker(on_result=pick_files_result)
-    page.overlay.append(pick_files_dialog)
+    def file_picker_upload(e: ft.FilePickerUploadEvent):
+        progressbar.value = e.progress
+        page.update()
+        if progressbar.value == 1:
+            progressbar.visible = False
+        page.update()
 
+    file_picker_dialog = ft.FilePicker(
+        on_result=file_picker_result, on_upload=file_picker_upload
+    )
+    page.overlay.append(file_picker_dialog)
+    
     def save_od(e):
         try:
             device = devices.tabs[devices.selected_index - 1]
@@ -61,17 +88,18 @@ def main(page: ft.Page):
     menubar = ft.AppBar(
         title=ft.Text("Objdict editor"),
         actions=[
-            ft.IconButton(ft.icons.FILE_DOWNLOAD_OUTLINED,
-                          on_click=lambda e: pick_files_dialog.pick_files(allow_multiple=True,
+            ft.IconButton(ft.Icons.FILE_DOWNLOAD_OUTLINED,
+                          on_click=lambda e: file_picker_dialog.pick_files(allow_multiple=True,
                                                                           allowed_extensions=["eds", "dcf", "epf"])),
-            ft.IconButton(ft.icons.SAVE, on_click=save_od),
+            ft.IconButton(ft.Icons.SAVE, on_click=save_od),
         ]
     )
     page.add(
         menubar,
-        devices
+        devices,
+        progressbar
     )
     page.update()
 
 
-ft.app(target=main)
+ft.app(target=main, view=ft.WEB_BROWSER, port=8551, upload_dir=UPLOAD_DIR)

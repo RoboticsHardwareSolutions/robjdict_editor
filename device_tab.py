@@ -40,7 +40,6 @@ class DeviceTab(ft.Tab):
 
         network = canopen.Network()
         self.__od = network.add_node(1, object_dictionary=self.path_to_od)
-        nnode(self.path_to_od)
         self.dev_info = DevInfoPanel(self.__od)
         self.life_communication = LifeCommunicationPanel(self.__od)
         self.sdo_communication = SdoCommunicationPanel(self.__od)
