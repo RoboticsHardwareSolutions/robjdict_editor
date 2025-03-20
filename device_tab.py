@@ -8,7 +8,6 @@ from panels.tx_pdo_communication import TPdoCommunicationPanel
 from panels.rx_pdo_communication import RPdoCommunicationPanel
 from panels.object_dictionary import ObjDictPanel
 
-
 class DeviceTab(ft.Tab):
     CTRL_DEVICE_INFO = "Device info"
     CTRL_LIFE_COMMUNICATION = "Life communication"

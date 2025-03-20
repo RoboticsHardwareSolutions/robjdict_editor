@@ -3,7 +3,6 @@ import can
 from can import Message
 import flet as ft
 from canopen import ObjectDictionary
-from flet_core import ButtonStyle
 
 data_type_map = {
     canopen.objectdictionary.BOOLEAN: "BOOLEAN",
