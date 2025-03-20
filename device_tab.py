@@ -7,7 +7,6 @@ from panels.sdo_communication import SdoCommunicationPanel
 from panels.tx_pdo_communication import TPdoCommunicationPanel
 from panels.rx_pdo_communication import RPdoCommunicationPanel
 from panels.object_dictionary import ObjDictPanel
-from virtual import nnode
 
 class DeviceTab(ft.Tab):
     CTRL_DEVICE_INFO = "Device info"
