@@ -2,7 +2,7 @@ import canopen
 import can
 from can import Message
 import flet as ft
-
+import copy
 
 class SdoCommunicationPanel(ft.ResponsiveRow):
     def __init__(self, od):
@@ -10,15 +10,41 @@ class SdoCommunicationPanel(ft.ResponsiveRow):
         self.visible = False
         self.expand = True
 
-        self.tf_sdo_server_tx = ft.TextField(label="COB ID Tx SDO", value="0x580", col=2)
-        self.tf_sdo_server_rx = ft.TextField(label="COB ID Rx SDO", value="0x600", col=2)
+        def change_server(e):
+            if od.object_dictionary.get_variable(0x1200, 1) is not None and od.object_dictionary.get_variable(0x1200, 2).default is not None:
+                od.object_dictionary.get_variable(0x1200, 1).default = int(self.tf_sdo_server_rx.value, 16)
+                od.object_dictionary.get_variable(0x1200, 2).default = int(self.tf_sdo_server_tx.value, 16)
+            else:
+                od_srv_sdo = canopen.objectdictionary.ODRecord(f'Server SDO Parameter', 0x1200)
+                var = canopen.objectdictionary.ODVariable("Number of Entries", 0x1200, 0)
+                var.access_type = "ro"
+                var.data_type = canopen.objectdictionary.datatypes.UNSIGNED8
+                var.default = 2
+                od_srv_sdo.add_member(var)
+                
+                var = canopen.objectdictionary.ODVariable("COB ID Client to Server (Receive SDO)", 0x1200, 1)
+                var.access_type = "rw"
+                var.data_type = canopen.objectdictionary.datatypes.UNSIGNED32
+                var.default = int(self.tf_sdo_server_rx.value, 16)
+                od_srv_sdo.add_member(var)
+
+                var = canopen.objectdictionary.ODVariable("COB ID Server to Client (Transmit SDO)", 0x1200, 2)
+                var.access_type = "rw"
+                var.data_type = canopen.objectdictionary.datatypes.UNSIGNED32
+                var.default = int(self.tf_sdo_server_tx.value, 16)
+                od_srv_sdo.add_member(var)
+                od.object_dictionary.add_object(od_srv_sdo)
+
+
+        self.tf_sdo_server_tx = ft.TextField(label="COB ID Tx SDO", value="0x580", col=2, on_change=change_server)
+        self.tf_sdo_server_rx = ft.TextField(label="COB ID Rx SDO", value="0x600", col=2, on_change=change_server)
 
         self.lv_sdo_client = ft.ListView(expand=1, spacing=10, padding=20, height=370)
         self.t_sdo_client = ft.Text("SDO Client")
 
         def button_first_sdo_cli(e):
             self.lv_sdo_client.controls.clear()
-            self.lv_sdo_client.controls.append(add_consumer_heartbeat(f'{hex(0x01)}', f'{hex(0x601)}', f'{hex(0x581)}'))
+            self.lv_sdo_client.controls.append(add_sdo_client(f'{hex(0x01)}', f'{hex(0x601)}', f'{hex(0x581)}'))
             self.t_sdo_client.value = "SDO Client :" + str(len(self.lv_sdo_client.controls))
             self.update()
 
@@ -39,16 +65,16 @@ class SdoCommunicationPanel(ft.ResponsiveRow):
                         if int(next_obj.content.controls[0].value, 16) == new_id:
                             self.lv_sdo_client.auto_scroll = True
                             new_id = 0x7f
-                            objs.append(add_consumer_heartbeat(f'{hex(new_id)}', f'{hex(new_id + 0x600)}',
+                            objs.append(add_sdo_client(f'{hex(new_id)}', f'{hex(new_id + 0x600)}',
                                                                f'{hex(new_id + 0x580)}'))
                         else:
                             objs.insert(item_diss + 1,
-                                        add_consumer_heartbeat(f'{hex(new_id)}', f'{hex(new_id + 0x600)}',
+                                        add_sdo_client(f'{hex(new_id)}', f'{hex(new_id + 0x600)}',
                                                                f'{hex(new_id + 0x580)}'))
 
                     except IndexError:
                         objs.insert(item_diss + 1,
-                                    add_consumer_heartbeat(f'{hex(new_id)}', f'{hex(new_id + 0x600)}',
+                                    add_sdo_client(f'{hex(new_id)}', f'{hex(new_id + 0x600)}',
                                                            f'{hex(new_id + 0x580)}'))
 
                 self.t_sdo_client.value = "SDO Client :" + str(len(self.lv_sdo_client.controls))
@@ -57,15 +83,30 @@ class SdoCommunicationPanel(ft.ResponsiveRow):
         def button_delete(e):
             item_delete = 0
             for item_diss in range(len(self.lv_sdo_client.controls)):
-                if e.control.parent.parent.uid == self.lv_sdo_client.controls[item_diss].uid:
+                if e.control.parent.parent.uid == self.lv_sdo_client.controls[item_diss].uid: # search item
                     item_delete = item_diss
+            # delete client from OD
+            for item in range(item_delete, len(self.lv_sdo_client.controls)):
+                obj = od.object_dictionary.pop(0x1280 + item + 1, None)
+                if obj:
+                    obj.index = 0x1280 + item
+                    obj.name = f'Client SDO {item + 1} Parameter'
+                    for subobj in obj.values():
+                        subobj.index = 0x1280 + item
+                    od.object_dictionary[0x1280 + item] = obj
+                else:
+                    try: # For the last item
+                        od.object_dictionary.__delitem__(0x1280 + item)
+                    except KeyError:
+                        pass
+            # remove item from list view
             self.lv_sdo_client.controls.remove(self.lv_sdo_client.controls[item_delete])
-            self.t_sdo_client.value = "SDO Client :" + str(len(self.lv_sdo_client.controls))
+            self.t_sdo_client.value = "SDO Client :" + str(len(self.lv_sdo_client.controls))            
             if len(self.lv_sdo_client.controls) == 0:
                 self.lv_sdo_client.controls.append(self.__add_btn)
             self.update()
 
-        def add_consumer_heartbeat(node_id, tx_cobid, rx_cobid):
+        def add_sdo_client(node_id, tx_cobid, rx_cobid):
             return ft.Container(
                 content=ft.ResponsiveRow([
                     ft.TextField(
@@ -103,7 +144,7 @@ class SdoCommunicationPanel(ft.ResponsiveRow):
                 rx = od.object_dictionary.get_variable(index_cli_sdo, 2).default
                 node_id = od.object_dictionary.get_variable(index_cli_sdo, 3).default
                 self.lv_sdo_client.controls.append(
-                    add_consumer_heartbeat(f'{hex(node_id)}', f'{hex(tx)}', f'{hex(rx)}'))
+                    add_sdo_client(f'{hex(node_id)}', f'{hex(tx)}', f'{hex(rx)}'))
             else:
                 break
         if len(self.lv_sdo_client.controls) == 0:
@@ -138,32 +179,6 @@ class SdoCommunicationPanel(ft.ResponsiveRow):
         ]
 
     def update_od(self, od):
-        # Save Server SDO
-        if od.object_dictionary.get_variable(0x1200, 1) is not None and od.object_dictionary.get_variable(0x1200, 2).default is not None:
-            od.object_dictionary.get_variable(0x1200, 1).default = self.tf_sdo_server_rx.value
-            od.object_dictionary.get_variable(0x1200, 2).default = self.tf_sdo_server_tx.value
-        else:
-            od_srv_sdo = canopen.objectdictionary.ODRecord(f'Server SDO Parameter', 0x1200)
-            var = canopen.objectdictionary.ODVariable("Number of Entries", 0x1200, 0)
-            var.access_type = "ro"
-            var.data_type = canopen.objectdictionary.datatypes.UNSIGNED8
-            var.default = 2
-            od_srv_sdo.add_member(var)
-            
-            var = canopen.objectdictionary.ODVariable("COB ID Client to Server (Receive SDO)", 0x1200, 1)
-            var.access_type = "rw"
-            var.data_type = canopen.objectdictionary.datatypes.UNSIGNED32
-            var.default = int(self.tf_sdo_server_rx.value, 16)
-            od_srv_sdo.add_member(var)
-
-            var = canopen.objectdictionary.ODVariable("COB ID Server to Client (Transmit SDO)", 0x1200, 2)
-            var.access_type = "rw"
-            var.data_type = canopen.objectdictionary.datatypes.UNSIGNED32
-            var.default = int(self.tf_sdo_server_tx.value, 16)
-            od_srv_sdo.add_member(var)
-            od.object_dictionary.add_object(od_srv_sdo)
-
-
         # Save Client SDO
         ## clear old
         index = 0x1280

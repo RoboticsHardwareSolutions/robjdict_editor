@@ -57,9 +57,7 @@ class DeviceTab(ft.Tab):
         ])
 
     def save_device(self):
-        od = self.__od
-        od = self.sdo_communication.update_od(od)
-        canopen.export_od(od.object_dictionary, self.path_to_od)
+        canopen.export_od(self.__od.object_dictionary, self.path_to_od)
 
     def __seg_btn(self, e):
         target_segment = e.control.controls[int(e.data)].value
