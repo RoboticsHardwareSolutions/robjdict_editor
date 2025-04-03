@@ -58,7 +58,6 @@ class DeviceTab(ft.Tab):
 
     def save_device(self):
         od = self.__od
-        od = self.life_communication.update_od(od)
         od = self.sdo_communication.update_od(od)
         canopen.export_od(od.object_dictionary, self.path_to_od)
 

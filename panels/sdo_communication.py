@@ -139,8 +139,30 @@ class SdoCommunicationPanel(ft.ResponsiveRow):
 
     def update_od(self, od):
         # Save Server SDO
-        od.object_dictionary.get_variable(0x1200, 1).default = self.tf_sdo_server_rx.value
-        od.object_dictionary.get_variable(0x1200, 2).default = self.tf_sdo_server_tx.value
+        if od.object_dictionary.get_variable(0x1200, 1) is not None and od.object_dictionary.get_variable(0x1200, 2).default is not None:
+            od.object_dictionary.get_variable(0x1200, 1).default = self.tf_sdo_server_rx.value
+            od.object_dictionary.get_variable(0x1200, 2).default = self.tf_sdo_server_tx.value
+        else:
+            od_srv_sdo = canopen.objectdictionary.ODRecord(f'Server SDO Parameter', 0x1200)
+            var = canopen.objectdictionary.ODVariable("Number of Entries", 0x1200, 0)
+            var.access_type = "ro"
+            var.data_type = canopen.objectdictionary.datatypes.UNSIGNED8
+            var.default = 2
+            od_srv_sdo.add_member(var)
+            
+            var = canopen.objectdictionary.ODVariable("COB ID Client to Server (Receive SDO)", 0x1200, 1)
+            var.access_type = "rw"
+            var.data_type = canopen.objectdictionary.datatypes.UNSIGNED32
+            var.default = int(self.tf_sdo_server_rx.value, 16)
+            od_srv_sdo.add_member(var)
+
+            var = canopen.objectdictionary.ODVariable("COB ID Server to Client (Transmit SDO)", 0x1200, 2)
+            var.access_type = "rw"
+            var.data_type = canopen.objectdictionary.datatypes.UNSIGNED32
+            var.default = int(self.tf_sdo_server_tx.value, 16)
+            od_srv_sdo.add_member(var)
+            od.object_dictionary.add_object(od_srv_sdo)
+
 
         # Save Client SDO
         ## clear old

@@ -1,5 +1,4 @@
 import canopen
-import can
 from can import Message
 import flet as ft
 
@@ -10,19 +9,24 @@ class LifeCommunicationPanel(ft.ResponsiveRow):
         self.visible = False
         self.expand = True
 
+        def change(e):
+            self.update_od(od)
+
         self.te_prod_hb = ft.TextField(label="Time, ms:",
                                        col=4,
-                                       value=od.object_dictionary.get_variable(0x1017, 0).default)
+                                       value=od.object_dictionary.get_variable(0x1017, 0).default,
+                                       on_change=change)
         self.lv_consumer_hb = ft.ListView(expand=1, spacing=10, padding=20, height=370, col=8)
         self.t_consumer_hb = ft.Text("Consumer Heartbeat")
 
-        def start_chb(e):
+        def first_chb(e):
             self.lv_consumer_hb.controls.clear()
             self.lv_consumer_hb.controls.append(add_consumer_heartbeat(f'{hex(0x01)}', f'{1000}'))
             self.t_consumer_hb.value = "Consumer Heartbeat :" + str(len(self.lv_consumer_hb.controls))
+            self.update_od(od)
             self.update()
 
-        self.__btn_first_chb = ft.TextButton("Add Consumer Heartbeat Time", data=True, col=8, on_click=start_chb)
+        self.__btn_first_chb = ft.TextButton("Add Consumer Heartbeat Time", data=True, col=8, on_click=first_chb)
 
         def button_add(e):
             objs = self.lv_consumer_hb.controls
@@ -47,6 +51,7 @@ class LifeCommunicationPanel(ft.ResponsiveRow):
                         except IndexError:
                             objs.insert(item_obj + 1, add_consumer_heartbeat(f'{hex(new_id)}', 1000))
                     self.t_consumer_hb.value = "Consumer Heartbeat :" + str(len(self.lv_consumer_hb.controls))
+            self.update_od(od)
             self.update()
 
         def button_delete(e):
@@ -58,6 +63,7 @@ class LifeCommunicationPanel(ft.ResponsiveRow):
             self.t_consumer_hb.value = "Consumer Heartbeat :" + str(len(self.lv_consumer_hb.controls))
             if len(self.lv_consumer_hb.controls) == 0:
                 self.lv_consumer_hb.controls.append(self.__btn_first_chb)
+            self.update_od(od)
             self.update()
 
         def add_consumer_heartbeat(node_id, time):
@@ -66,11 +72,13 @@ class LifeCommunicationPanel(ft.ResponsiveRow):
                     ft.TextField(
                         label="Node ID",
                         col=5,
-                        value=node_id),
+                        value=node_id,
+                        on_change=change),
                     ft.TextField(
                         label="Time, ms",
                         col=5,
-                        value=time),
+                        value=time,
+                        on_change=change),
                     ft.IconButton(
                         icon=ft.icons.ADD,
                         icon_color="blue400",
@@ -131,6 +139,7 @@ class LifeCommunicationPanel(ft.ResponsiveRow):
     def update_od(self, od):
         # Save Producer Heartbeat Time
         od.object_dictionary.get_variable(0x1017).default = self.te_prod_hb.value
+        od.object_dictionary.get_variable(0x1017).default_raw = self.te_prod_hb.value
 
         # Save Consumer Heartbeat Time
         ## clear old times
