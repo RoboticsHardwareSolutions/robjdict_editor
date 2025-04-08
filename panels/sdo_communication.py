@@ -11,7 +11,7 @@ class SdoCommunicationPanel(ft.ResponsiveRow):
         self.expand = True
 
         def change_server(e):
-            if od.object_dictionary.get_variable(0x1200, 1) is not None and od.object_dictionary.get_variable(0x1200, 2).default is not None:
+            if od.object_dictionary.get_variable(0x1200, 1) is not None and od.object_dictionary.get_variable(0x1200, 2) is not None:
                 od.object_dictionary.get_variable(0x1200, 1).default = int(self.tf_sdo_server_rx.value, 16)
                 od.object_dictionary.get_variable(0x1200, 2).default = int(self.tf_sdo_server_tx.value, 16)
             else:
